@@ -1,3 +1,4 @@
+```markdown
 # Autonomous Multi-Agent Medallion Data Pipeline Sandbox
 
 This repository showcases a production-grade, self-healing data analytics engine designed to execute schema mapping, code generation, and automated validation routines over telemetry and transit datasets (NYC TLC Parquet streams). 
@@ -25,28 +26,39 @@ Instead of a monolithic single-agent loop, this project deploys a **Multi-Agent 
 ## 🧱 Medallion Data Lifecycle Alignment
 
 The architecture is designed to automate logic verification within a **Medallion Data Architecture** (Bronze → Silver → Gold):
-*   **Bronze (Ingest Validation)**: The `SchemaSpecialist` acts as an automated ingestion check, catching schema drift in raw telematics data before costly compute resources are allocated.
+*   **Bronze (Ingest Validation)**: The `SchemaSpecialist` acts as an automated ingestion check, catching schema drift in raw telematics data before compute resources are allocated.
 *   **Silver (Self-Healing Transformation)**: The `Orchestrator` automates the path from raw ingestion to cleaned datasets. If a transformation fails, the system isolates the logic error and self-corrects the code in real-time.
 *   **Gold (Business Logic)**: The engine produces verified, human-readable reports on core metrics like trip counts and financial averages, ready for stakeholder decision-making.
 
-## 🛠 Claude Code Native Skill Architecture
+## 🛠 Claude Code Native Extension Integration
 
-This repository is built explicitly to hook into Anthropic's **Claude Code** agentic CLI tool using the official native directory structure. Rather than static JSON schemas, custom skills are packaged as isolated directories containing structured Markdown with YAML frontmatter.
+This repository is built explicitly to hook into Anthropic's **Claude Code** agentic CLI tool infrastructure using its official, native directory layout format:
 
-### Workspace Blueprint
+### Workspace Directory Layout
 ```text
-.claude/
-├── settings.json
-└── skills/
-    └── run-pipeline/
-        └── SKILL.md
+D:\self_healing_sandbox\
+├── .claude\
+│   ├── settings.json
+│   ├── hooks\
+│   │   └── pre-commit.py
+│   └── skills\
+│       └── run-pipeline\
+│           └── SKILL.md
+├── orchestrator.py
+├── schema_specialist.py
+├── code_generator.py
+├── sandbox.py
+├── mcp_server.py
+└── CLAUDE.md
 ```
 
-- **`.claude/settings.json`**: Restricts the system execution boundary to native Windows 11 CMD/PowerShell environments, enforcing engineering hygiene.
-- **`.claude/skills/run-pipeline/SKILL.md`**: Provides a standard markdown system integration file leveraging YAML metadata hooks to register the `/run-pipeline` sub-agent execution flow.
+- **`.claude/settings.json`**: Enforces strict environment constraints, targeting native Windows 11 CMD profiles and loading localized Model Context Protocol handlers.
+- **`.claude/hooks/pre-commit.py`**: A custom automation hook. It intercepts workspace updates and executes an automated compilation pass over our engine scripts to block invalid code syntax from entering production.
+- **`.claude/skills/run-pipeline/SKILL.md`**: A native markdown skill specification utilizing YAML metadata headers to register the `/run-pipeline` sub-agent workflow.
+- **`mcp_server.py`**: A custom **Model Context Protocol (MCP) Server**. It exposes local database schema layouts over standard tool-calling communication lines, mirroring Databricks Unity Catalog metadata integrations.
 
-### Triggering the Automation Workflow
-When utilizing the Claude Code CLI inside this workspace directory, you do not need rigid parameter flags. Invoke the pipeline natively via the registered slash command using natural language:
+### Running the Custom Workflows
+When using the Claude Code tool inside this directory, invoke your custom tools using simple natural language:
 
 ```text
 Run the /run-pipeline skill for green taxi month 1 to calculate trip count
@@ -59,3 +71,4 @@ To ensure cost governance and high-speed testing, the engine is currently optimi
 *   **Decoupled Architecture**: Logic is modular, allowing for targeted unit testing of sub-agents.
 *   **Memory Optimization**: Uses byte-streaming to profile large remote files without high local disk I/O or "Unrecognized Filesystem" errors.
 *   **Cross-Platform Readiness**: Fully optimized for Windows 11 CMD environments without Unix bash dependencies.
+```
