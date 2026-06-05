@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "system-toolkit": {
+      "command": "python",
+      "args": [
+        "D:\\self_healing_sandbox\\mcp_server.py"
+      ]
+    }
+  }
+}

@@ -55,7 +55,7 @@ D:\self_healing_sandbox\
 - **`.claude/settings.json`**: Enforces strict environment constraints, targeting native Windows 11 CMD profiles and loading localized Model Context Protocol handlers.
 - **`.claude/hooks/pre-commit.py`**: A custom automation hook. It intercepts workspace updates and executes an automated compilation pass over our engine scripts to block invalid code syntax from entering production.
 - **`.claude/skills/run-pipeline/SKILL.md`**: A native markdown skill specification utilizing YAML metadata headers to register the `/run-pipeline` sub-agent workflow.
-- **`mcp_server.py`**: A custom **Model Context Protocol (MCP) Server**. It exposes local database schema layouts over standard tool-calling communication lines, mirroring Databricks Unity Catalog metadata integrations.
+- **`mcp_server.py`**: A custom **Model Context Protocol (MCP) Server**. It currently provides secure LLM access to Databricks Medallion schema definitions, local database analytics (`query_db`), real-time weather APIs (`get_weather`), and financial market data (`get_stock_quote`). The MCP architecture acts as an extensible tool catalog, allowing the engineering team to rapidly integrate and expose new data pipelines, enterprise APIs, and models to Claude as business requirements evolve.
 
 ### Running the Custom Workflows
 When using the Claude Code tool inside this directory, invoke your custom tools using simple natural language:
@@ -66,6 +66,11 @@ Run the /run-pipeline skill for green taxi month 1 to calculate trip count
 
 ## 🚀 Execution Profile (Development Mode)
 To ensure cost governance and high-speed testing, the engine is currently optimized for the **Green Taxi Records** dataset partition. This allows for rapid iteration of the self-healing logic and schema mapping over a smaller data footprint before scaling to larger multi-terabyte datasets.
+
+## 🧠 Polyglot AI Engineering (AI Building AI)
+This project was developed using a multi-model, AI-first methodology. Rather than relying on a single assistant, I actively orchestrated a diverse ecosystem of foundation models—including **Google Gemini**, **GitHub Copilot**, **OpenAI GPT**, and **Anthropic's Claude**—to collaboratively design, debug, and write the codebase. 
+
+This approach demonstrates a fluency in leveraging the unique strengths of various LLMs (e.g., Copilot for inline autocomplete, Gemini for deep architectural reasoning, and Claude for agentic execution) to rapidly build, debug, and iterate on complex, autonomous AI systems. It is the literal embodiment of using AI to build Agentic AI.
 
 ## ⚙️ Engineering Hygiene
 *   **Decoupled Architecture**: Logic is modular, allowing for targeted unit testing of sub-agents.

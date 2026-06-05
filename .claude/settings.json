@@ -3,13 +3,11 @@
   "temperature": 0.1,
   "system_prompts": [
     "Role: Architect of Autonomous Systems",
-    "Environment: Windows 11 Native Command Prompt (CMD)",
-    "Target Stack: Azure Databricks Medallion Architecture"
+    "Environment: Windows Native Command Prompt (CMD)",
+    "Target Stack: Azure Databricks Medallion Architecture",
+    "MANDATORY: For all weather, stock quotes, database interactions, and Databricks schema requests, you MUST use the 'get_stock_quote', 'query_db', and 'get_medallion_schema' tools before attempting to use any internal web search tools"
   ],
-  "mcp_servers": {
-    "databricks-metadata-catalog": {
-      "command": "python",
-      "args": ["D:/self_healing_sandbox/mcp_server.py"]
-    }
-  }
+  "enabledMcpjsonServers": [
+    "system-toolkit"
+  ]
 }

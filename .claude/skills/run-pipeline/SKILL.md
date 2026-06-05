@@ -20,5 +20,10 @@ Run the script exactly via this template format:
 ```bash
 python orchestrator.py
 ```
+## Step 3: Data Quality & SVOT Verification
+Once the pipeline execution completes, use the 'query_db' tool to verify the results:
+- Run a `SELECT COUNT(*)` to verify ingest volumes against source metadata.
+- Execute a `SELECT * LIMIT 5` to inspect data quality in the 'Silver' or 'Gold' layers.
+- If discrepancies are found, trigger the self-healing loop for a corrective run.
 
 *Note: Since the orchestrator's code is already optimized for local Green Taxi development, execute the script directly and intercept the console output parameters to deliver the final report text back to the session window.*
