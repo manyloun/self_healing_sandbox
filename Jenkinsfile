@@ -103,7 +103,7 @@ pipeline {
                                     cd ${DEPLOYMENT_DIR}
                                     
                                     echo "🛑 Stopping existing containers..."
-                                    docker-compose down || true
+                                    docker compose down || true
                                     
                                     echo "🔄 Pulling latest code..."
                                     git pull origin main || true
@@ -112,13 +112,13 @@ pipeline {
                                     export ANTHROPIC_API_KEY="${ANTHROPIC_KEY}"
                                     
                                     echo "🚀 Starting new containers..."
-                                    docker-compose up -d --build
+                                    docker compose up -d --build
                                     
                                     echo "⏳ Waiting for services to be ready..."
                                     sleep 5
                                     
                                     echo "✅ Containers running:"
-                                    docker-compose ps
+                                    docker compose ps
 EOF
                             '''
                         }
@@ -165,7 +165,7 @@ EOF
                         sh '''
                             ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@192.168.6.51 << 'EOF'
                                 echo "📋 Container logs (last 20 lines):"
-                                docker-compose -f /opt/taxi-analytics/docker-compose.yml logs --tail=20
+                                docker compose -f /opt/taxi-analytics/docker-compose.yml logs --tail=20
                                 
                                 echo ""
                                 echo "📦 Running containers:"
