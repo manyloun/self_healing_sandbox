@@ -12,7 +12,6 @@ pipeline {
         // Jenkins credentials (configure in Jenkins UI: Manage Jenkins > Manage Credentials)
         // Store your API keys securely in Jenkins credentials store
         ANTHROPIC_CREDENTIAL = credentials('anthropic-api-key')
-        OPENAI_CREDENTIAL = credentials('openai-api-key') // Optional
         SSH_KEY_ID = 'ubuntu-ssh-key'  // Configure SSH key credentials in Jenkins
     }
 
@@ -102,8 +101,7 @@ pipeline {
                 script {
                     echo "⚡ Starting Docker containers..."
                     withCredentials([
-                        string(credentialsId: 'anthropic-api-key', variable: 'ANTHROPIC_KEY'),
-                        string(credentialsId: 'openai-api-key', variable: 'OPENAI_KEY')
+                        string(credentialsId: 'anthropic-api-key', variable: 'ANTHROPIC_KEY')
                     ]) {
                         withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                             sh '''
@@ -118,7 +116,6 @@ pipeline {
                                     
                                     echo "🌍 Setting environment variables..."
                                     export ANTHROPIC_API_KEY="${ANTHROPIC_KEY}"
-                                    export OPENAI_API_KEY="${OPENAI_KEY}"
                                     
                                     echo "🚀 Starting new containers..."
                                     docker-compose up -d --build
