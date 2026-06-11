@@ -111,6 +111,9 @@ pipeline {
                                     echo "🌍 Setting environment variables..."
                                     export ANTHROPIC_API_KEY="${ANTHROPIC_KEY}"
                                     
+                                    echo "📝 Creating log files if missing..."
+                                    touch api_usage.json execution_log.json
+                                    
                                     echo "🚀 Starting new containers..."
                                     docker compose up -d --build
                                     
