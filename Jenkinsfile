@@ -12,7 +12,7 @@ pipeline {
         // Jenkins credentials (configure in Jenkins UI: Manage Jenkins > Manage Credentials)
         // Store your API keys securely in Jenkins credentials store
         ANTHROPIC_CREDENTIAL = credentials('anthropic-api-key')
-        SSH_KEY_ID = 'ubuntu-ssh-key'  // Configure SSH key credentials in Jenkins
+        SSH_KEY_ID = 'ubuntu-ssh'  // Configure SSH key credentials in Jenkins
     }
 
     options {
@@ -68,7 +68,7 @@ pipeline {
             steps {
                 script {
                     echo "📦 Deploying to Ubuntu server (192.168.6.51:8100)..."
-                    withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         sh '''
                             # Copy docker-compose and Dockerfile to Ubuntu
                             scp -i ${SSH_KEY} -o StrictHostKeyChecking=no \
@@ -97,7 +97,7 @@ pipeline {
                     withCredentials([
                         string(credentialsId: 'anthropic-api-key', variable: 'ANTHROPIC_KEY')
                     ]) {
-                        withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                        withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                             sh '''
                                 ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@192.168.6.51 << 'EOF'
                                     cd ${DEPLOYMENT_DIR}
@@ -161,7 +161,7 @@ EOF
         stage('📝 Log Container Status') {
             steps {
                 script {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         sh '''
                             ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@192.168.6.51 << 'EOF'
                                 echo "📋 Container logs (last 20 lines):"
