@@ -1,14 +1,35 @@
+import json
 from providers import LLMFactory
 
 class CodeGenerator:
     def __init__(self, provider_name: str):
         self.llm = LLMFactory.get_provider(provider_name)
 
-    def generate_analytics_code(self, target_url: str, user_task: str, schema_profile: str) -> str:
+    def _format_schema_for_llm(self, schema_profile) -> str:
+        """Format schema (dict or string) into readable text for LLM"""
+        if isinstance(schema_profile, dict):
+            # Convert schema dict to readable format
+            formatted_fields = []
+            if "fields" in schema_profile:
+                for field in schema_profile["fields"]:
+                    formatted_fields.append(f"  - {field['name']}: {field['type']}")
+            return "SCHEMA FIELDS:\n" + "\n".join(formatted_fields)
+        else:
+            # Already a string
+            return schema_profile
+
+    def generate_analytics_code(self, target_url: str, user_task: str, schema_profile) -> tuple:
+        """
+        Generate analytics code.
+        Returns: (code: str, usage_stats: dict)
+        """
+        schema_formatted = self._format_schema_for_llm(schema_profile)
+        
         system_prompt = f"""You are an elite Databricks Data Engineer. Write clean Python code using pandas to process data from: '{target_url}'
         1. Read file using: df = pd.read_parquet('{target_url}')
         2. Assign final human-readable string output to a local variable named 'FINAL_OUTPUT'.
         3. Output raw python text only. Never wrap code blocks in markdown fences like ```python."""
         
-        user_prompt = f"TASK: {user_task}\nSCHEMA:\n{schema_profile}\nWrite the processing script now."
-        return self.llm.generate_code(system_prompt, user_prompt)
+        user_prompt = f"TASK: {user_task}\n\n{schema_formatted}\n\nWrite the processing script now."
+        code, usage_stats = self.llm.generate_code(system_prompt, user_prompt)
+        return code, usage_stats
