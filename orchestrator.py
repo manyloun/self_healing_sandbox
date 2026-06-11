@@ -64,7 +64,10 @@ def run_multi_agent_pipeline(provider_name: str, vehicle_type: str, month: int, 
             print(f"🎉 [Orchestrator]: Cached code executed successfully for domain {vehicle_type.upper()}.")
             code_path = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}.py")
             usage_tracker.save_session(vehicle_type, month, user_task, True, schema_hash, code_path)
-            return result["output"]
+            return {
+                "answer": result["output"],
+                "code": cached_code
+            }
         else:
             print(f"⚠️  [Orchestrator]: Cached code failed. Regenerating with Claude...\n{result['error']}")
     
@@ -116,7 +119,10 @@ def run_multi_agent_pipeline(provider_name: str, vehicle_type: str, month: int, 
             print(f"🎉 [Orchestrator]: Job validation successful for domain {vehicle_type.upper()}.")
             code_path = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}.py")
             usage_tracker.save_session(vehicle_type, month, user_task, True, schema_hash, code_path)
-            return result["output"]
+            return {
+                "answer": result["output"],
+                "code": raw_code
+            }
             
         print(f"❌ [Orchestrator]: Sandbox exception triggered:\n{result['error']}")
         current_task_prompt = f"Your code failed: {result['error']}\nPlease rewrite it and fix the bugs."
