@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Main API server
+  taxi-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taxi-analytics-api
+    ports:
+      - "8100:8100"
+    environment:
+      - PYTHONUNBUFFERED=1
+      # API keys are passed from host environment or Jenkins credentials
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      # Persist generated schemas
+      - ./schema:/app/schema
+      # Persist generated and cached code
+      - ./code_cache:/app/code_cache
+      # Persist execution logs and usage tracking
+      - ./execution_log.json:/app/execution_log.json
+      - ./api_usage.json:/app/api_usage.json
+    restart: unless-stopped
+    networks:
+      - pipeline-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  pipeline-net:
+    driver: bridge

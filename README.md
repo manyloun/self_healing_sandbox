@@ -195,3 +195,23 @@ This approach demonstrates a fluency in leveraging the unique strengths of vario
 *   **Transparent Logging**: All executions logged for auditing and cost analysis
 *   **Cross-Platform Readiness**: Fully optimized for Windows 11 CMD environments without Unix bash dependencies.
 
+## 🐳 Production Deployment
+
+This repository includes production-ready deployment files for Jenkins + Docker on Ubuntu:
+
+- **`Dockerfile`** - Multi-stage Python 3.13 image optimized for FastAPI
+- **`docker-compose.yml`** - Service definition with persistent volumes (port 8100)
+- **`Jenkinsfile`** - Declarative CI/CD pipeline with Jenkins credential store integration
+- **`api_server.py`** - REST API microservice (FastAPI on port 8100)
+- **`DEPLOYMENT.md`** - Complete deployment guide for Ubuntu + Jenkins
+
+### Quick Deployment
+```bash
+# 1. Configure Jenkins credentials (Manage Credentials)
+# 2. Create pipeline job pointing to this repo
+# 3. Jenkins triggers automatically on git push
+# 4. API available at http://192.168.6.51:8100
+```
+
+**See [DEPLOYMENT.md](DEPLOYMENT.md) for full setup instructions.**
+
