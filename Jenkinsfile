@@ -55,6 +55,11 @@ pipeline {
                         # Run container and check health
                         docker run --rm --entrypoint python ${IMAGE_NAME}:${BUILD_NUMBER} -m py_compile api_server.py
                         echo "✅ Python syntax check passed"
+                        
+                        # Run the automated API tests
+                        echo "🧪 Running Pytest automated test suite..."
+                        docker run --rm -v ${PWD}/test_api.py:/app/test_api.py --entrypoint pytest ${IMAGE_NAME}:${BUILD_NUMBER} test_api.py -v
+                        echo "✅ Automated tests passed successfully"
                     '''
                 }
             }

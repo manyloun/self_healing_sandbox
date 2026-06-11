@@ -13,12 +13,36 @@ from typing import Optional
 
 # Import local modules
 import orchestrator
-import usage_tracker
+from usage_tracker import UsageTracker
+
+usage_tracker = UsageTracker()
+
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Verify configuration on startup"""
+    print("=" * 70)
+    print("🚀 NYC Taxi Analytics Pipeline - FastAPI Server")
+    print("=" * 70)
+    print(f"Version: 2.0.0")
+    print(f"Port: 8100")
+    print(f"API Keys Configured: {'ANTHROPIC_API_KEY' in os.environ}")
+    print(f"OpenAI Configured: {'OPENAI_API_KEY' in os.environ}")
+    print(f"Daily Spending Limit: ${usage_tracker.DAILY_LIMIT}")
+    print(f"Hourly Spending Limit: ${usage_tracker.HOURLY_LIMIT}")
+    print("=" * 70)
+    print("✅ Server ready at http://0.0.0.0:8100")
+    print("📊 Dashboard: http://localhost:8100/api/dashboard")
+    print("💰 Costs: http://localhost:8100/api/costs")
+    print("=" * 70)
+    yield
 
 app = FastAPI(
     title="NYC Taxi Analytics Pipeline",
     version="2.0.0",
-    description="On-demand microservice for autonomous schema analysis and code generation"
+    description="On-demand microservice for autonomous schema analysis and code generation",
+    lifespan=lifespan
 )
 
 # Enable CORS for Jenkins/dashboard access
@@ -260,23 +284,6 @@ async def get_dashboard():
 # STARTUP & SHUTDOWN
 # ============================================================================
 
-@app.on_event("startup")
-async def startup_event():
-    """Verify configuration on startup"""
-    print("=" * 70)
-    print("🚀 NYC Taxi Analytics Pipeline - FastAPI Server")
-    print("=" * 70)
-    print(f"Version: 2.0.0")
-    print(f"Port: 8100")
-    print(f"API Keys Configured: {'ANTHROPIC_API_KEY' in os.environ}")
-    print(f"OpenAI Configured: {'OPENAI_API_KEY' in os.environ}")
-    print(f"Daily Spending Limit: ${usage_tracker.DAILY_LIMIT}")
-    print(f"Hourly Spending Limit: ${usage_tracker.HOURLY_LIMIT}")
-    print("=" * 70)
-    print("✅ Server ready at http://0.0.0.0:8100")
-    print("📊 Dashboard: http://localhost:8100/api/dashboard")
-    print("💰 Costs: http://localhost:8100/api/costs")
-    print("=" * 70)
 
 
 if __name__ == "__main__":
