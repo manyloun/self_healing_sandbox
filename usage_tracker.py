@@ -39,6 +39,12 @@ class UsageTracker:
         if os.path.exists(self.USAGE_FILE):
             with open(self.USAGE_FILE, 'r') as f:
                 self.historical_usage = json.load(f)
+            
+            # Ensure keys exist if file was initialized empty
+            for key, default in [("total_input_tokens", 0), ("total_output_tokens", 0), 
+                                 ("total_cost", 0.0), ("sessions", [])]:
+                if key not in self.historical_usage:
+                    self.historical_usage[key] = default
         else:
             self.historical_usage = {
                 "total_input_tokens": 0,
