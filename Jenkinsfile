@@ -99,7 +99,7 @@ pipeline {
                     ]) {
                         withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                             sh '''
-                                ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@192.168.6.51 << 'EOF'
+                                ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@192.168.6.51 << EOF
                                     cd ${DEPLOYMENT_DIR}
                                     
                                     echo "🛑 Stopping existing containers..."
@@ -163,7 +163,7 @@ EOF
                 script {
                     withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         sh '''
-                            ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@192.168.6.51 << 'EOF'
+                            ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@192.168.6.51 << EOF
                                 echo "📋 Container logs (last 20 lines):"
                                 docker compose -f /opt/taxi-analytics/docker-compose.yml logs --tail=20
                                 
