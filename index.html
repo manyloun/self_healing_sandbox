@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NYC Taxi Analytics Pipeline</title>
+    <title>NYC Taxi Analytics Pipeline (Debug)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -234,18 +234,79 @@
             line-height: 1.6;
             margin-bottom: 1.5rem;
         }
+
+        /* Monitor Dashboard Styles */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .metric-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .metric-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .metric-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+        }
+        .metric-card .value.cost { color: var(--success); }
+        
+        table.exec-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .exec-table th, .exec-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .exec-table th {
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .exec-table tr:last-child td { border-bottom: none; }
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .tag.cached { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .tag.api { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .tag.success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .tag.fail { background: rgba(239, 68, 68, 0.2); color: #f87171; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>NYC Taxi Analytics Pipeline</h1>
+        <h1>NYC Taxi Analytics Pipeline <span style="font-size: 1.5rem; opacity: 0.8;">(Debug)</span></h1>
         <p style="color: var(--text-muted);">Autonomous Schema Analysis & Code Generation Microservice</p>
     </header>
 
     <div class="tabs">
         <div class="tab active" onclick="switchTab('runner')">Analytics Runner</div>
+        <div class="tab" onclick="switchTab('monitor')">System Monitor</div>
         <div class="tab" onclick="switchTab('guide')">API User Guide</div>
     </div>
 
@@ -310,6 +371,54 @@
         </div>
     </div>
 
+    <!-- Monitor Tab -->
+    <div id="monitor" class="tab-content">
+        <div class="glass-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0;">Orchestrator Monitoring</h2>
+                <button onclick="loadMonitorData()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">🔄 Refresh</button>
+            </div>
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h4>Total API Cost</h4>
+                    <p class="value cost" id="mon_cost">$0.00</p>
+                </div>
+                <div class="metric-card">
+                    <h4>Total Executions</h4>
+                    <p class="value" id="mon_runs">0</p>
+                </div>
+                <div class="metric-card">
+                    <h4>Cache Hit Rate</h4>
+                    <p class="value" id="mon_cache">0%</p>
+                </div>
+                <div class="metric-card">
+                    <h4>Tokens Used</h4>
+                    <p class="value" id="mon_tokens">0</p>
+                </div>
+            </div>
+
+            <h3>Recent Executions</h3>
+            <div style="overflow-x: auto;">
+                <table class="exec-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Vehicle</th>
+                            <th>Status</th>
+                            <th>Execution Type</th>
+                            <th>Tokens</th>
+                            <th>Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody id="exec_tbody">
+                        <tr><td colspan="6" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- User Guide Tab -->
     <div id="guide" class="tab-content">
         <div class="glass-panel guide-section">
@@ -339,6 +448,63 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
         
         event.target.classList.add('active');
         document.getElementById(tabId).classList.add('active');
+
+        if(tabId === 'monitor') {
+            loadMonitorData();
+        }
+    }
+
+    async function loadMonitorData() {
+        try {
+            const res = await fetch('/api/dashboard');
+            const data = await res.json();
+            
+            document.getElementById('mon_cost').textContent = `$${data.spending_summary.total_cost.toFixed(4)}`;
+            document.getElementById('mon_runs').textContent = data.efficiency_metrics.total_runs;
+            document.getElementById('mon_cache').textContent = `${data.efficiency_metrics.cache_hit_rate_percent.toFixed(1)}%`;
+            document.getElementById('mon_tokens').textContent = (data.spending_summary.total_input_tokens + data.spending_summary.total_output_tokens).toLocaleString();
+
+            const tbody = document.getElementById('exec_tbody');
+            tbody.innerHTML = '';
+
+            if(data.recent_executions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No executions recorded yet.</td></tr>';
+                return;
+            }
+
+            // Reverse to show newest first
+            const executions = [...data.recent_executions].reverse();
+            
+            executions.forEach(exec => {
+                const tr = document.createElement('tr');
+                
+                const time = exec.timestamp ? exec.timestamp.substring(11, 19) : 'N/A';
+                const vehicle = `${exec.vehicle_type.toUpperCase()}-${String(exec.month).padStart(2, '0')}`;
+                
+                const statusTag = exec.success 
+                    ? '<span class="tag success">Success</span>' 
+                    : '<span class="tag fail">Failed</span>';
+                    
+                const typeTag = exec.api_called 
+                    ? '<span class="tag api">API Call</span>' 
+                    : '<span class="tag cached">Cached</span>';
+
+                const tokens = exec.input_tokens ? (exec.input_tokens + exec.output_tokens).toLocaleString() : '0';
+                const cost = exec.total_cost ? `$${exec.total_cost.toFixed(4)}` : '$0.00';
+
+                tr.innerHTML = `
+                    <td>${time}</td>
+                    <td>${vehicle}</td>
+                    <td>${statusTag}</td>
+                    <td>${typeTag}</td>
+                    <td>${tokens}</td>
+                    <td>${cost}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            console.error("Failed to load monitor data", e);
+        }
     }
 
     function resetVerification() {

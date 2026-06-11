@@ -20,6 +20,7 @@ COPY orchestrator.py \
       usage_tracker.py \
       api_server.py \
       monitor.py \
+      index.html \
       ./
 
 # Create directories for auto-generated files
