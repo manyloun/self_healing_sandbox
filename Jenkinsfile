@@ -65,9 +65,6 @@ pipeline {
         }
 
         stage('🚀 Deploy to Ubuntu') {
-            when {
-                branch 'main'
-            }
             steps {
                 script {
                     echo "📦 Deploying to Ubuntu server (192.168.6.51:8100)..."
@@ -94,9 +91,6 @@ pipeline {
         }
 
         stage('🐳 Start Services') {
-            when {
-                branch 'main'
-            }
             steps {
                 script {
                     echo "⚡ Starting Docker containers..."
@@ -134,9 +128,6 @@ EOF
         }
 
         stage('🏥 Health Checks') {
-            when {
-                branch 'main'
-            }
             steps {
                 script {
                     echo "🔍 Running health checks..."
@@ -168,9 +159,6 @@ EOF
         }
 
         stage('📝 Log Container Status') {
-            when {
-                branch 'main'
-            }
             steps {
                 script {
                     withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
