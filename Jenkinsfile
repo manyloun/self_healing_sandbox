@@ -111,8 +111,9 @@ pipeline {
                                     echo "🌍 Setting environment variables..."
                                     export ANTHROPIC_API_KEY="${ANTHROPIC_KEY}"
                                     
-                                    echo "📝 Creating log files if missing..."
-                                    touch api_usage.json execution_log.json
+                                    echo "📝 Creating log files if missing or empty..."
+                                    if [ ! -s api_usage.json ]; then echo "{}" > api_usage.json; fi
+                                    if [ ! -s execution_log.json ]; then echo "[]" > execution_log.json; fi
                                     
                                     echo "🚀 Starting new containers..."
                                     docker compose up -d --build
@@ -143,11 +144,11 @@ EOF
                                 
                                 # Get dashboard data
                                 echo "📊 Dashboard metrics:"
-                                curl -s http://192.168.6.51:8100/api/dashboard | python -m json.tool | head -30
+                                curl -s http://192.168.6.51:8100/api/dashboard | python3 -m json.tool | head -30
                                 
                                 echo ""
                                 echo "💰 Cost tracking:"
-                                curl -s http://192.168.6.51:8100/api/costs | python -m json.tool
+                                curl -s http://192.168.6.51:8100/api/costs | python3 -m json.tool
                                 
                                 exit 0
                             fi
