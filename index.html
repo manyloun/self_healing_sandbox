@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYC Taxi Analytics Pipeline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(148, 163, 184, 0.1);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 1s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .guide-section pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            color: #a78bfa;
+            font-family: monospace;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-weight: 500;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        select, input, textarea {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: var(--border-color);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.success-btn {
+            background: var(--success);
+        }
+        button.success-btn:hover:not(:disabled) {
+            background: var(--success-hover);
+        }
+
+        .status-msg {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-ok { color: #34d399; }
+        .status-error { color: #f87171; }
+        .status-pending { color: #fbbf24; }
+
+        .result-container {
+            display: none;
+        }
+
+        .result-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .spinner {
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top: 2px solid white;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        button.loading .spinner { display: inline-block; }
+        button.loading span { display: none; }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: var(--text-main); }
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        
+        .code-block {
+            background: rgba(0,0,0,0.4);
+            padding: 1.5rem;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .answer-block {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 1.5rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>NYC Taxi Analytics Pipeline</h1>
+        <p style="color: var(--text-muted);">Autonomous Schema Analysis & Code Generation Microservice</p>
+    </header>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('runner')">Analytics Runner</div>
+        <div class="tab" onclick="switchTab('guide')">API User Guide</div>
+    </div>
+
+    <!-- Analytics Runner Tab -->
+    <div id="runner" class="tab-content active">
+        <div class="glass-panel">
+            <h2 style="margin-top:0;">Run Analytics Task</h2>
+            <p style="color:var(--text-muted); margin-bottom: 1.5rem;">Select your data source and define your analytics task in plain English.</p>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="vehicle_type">Vehicle Type</label>
+                    <select id="vehicle_type" onchange="resetVerification()">
+                        <option value="yellow">Yellow Taxi</option>
+                        <option value="green">Green Taxi</option>
+                        <option value="fhv">For-Hire Vehicle (FHV)</option>
+                        <option value="fhvhv">High-Volume FHV (Uber/Lyft)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="month">Data Month (2026)</label>
+                    <select id="month" onchange="resetVerification()">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="task_desc">Analytics Task</label>
+                <textarea id="task_desc" placeholder="e.g. Calculate the total revenue and average trip distance..."></textarea>
+            </div>
+
+            <div class="btn-group">
+                <button id="verify_btn" onclick="verifyData()">
+                    <div class="spinner"></div>
+                    <span>Verify Data Availability</span>
+                </button>
+                <button id="process_btn" class="success-btn" onclick="runAnalysis()" disabled>
+                    <div class="spinner"></div>
+                    <span>Run Analysis</span>
+                </button>
+            </div>
+            <div id="verify_status" class="status-msg"></div>
+        </div>
+
+        <div id="result_panel" class="glass-panel result-container">
+            <h2 style="margin-top:0;">Analysis Results</h2>
+            <div id="answer_area" class="answer-block"></div>
+            <h3>Generated PySpark Code</h3>
+            <div id="code_area" class="code-block"></div>
+        </div>
+    </div>
+
+    <!-- User Guide Tab -->
+    <div id="guide" class="tab-content">
+        <div class="glass-panel guide-section">
+            <h2 style="margin-top:0;">How to use the API</h2>
+            <p>You can interact with the microservice directly via REST calls (e.g. from Postman or another app).</p>
+            
+            <h3>1. Check System Status & Costs</h3>
+            <pre>curl -X GET http://192.168.6.51:8100/api/dashboard</pre>
+            
+            <h3>2. Run an Analytics Pipeline</h3>
+            <p>Send a POST request to <code>/api/analyze</code> with the required JSON payload.</p>
+            <pre>
+curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&task=Calculate%20average%20fare&provider=anthropic" \
+     -H "accept: application/json" \
+     -d ""</pre>
+            
+            <h3>3. View Execution History</h3>
+            <pre>curl -X GET http://192.168.6.51:8100/api/history</pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function resetVerification() {
+        document.getElementById('process_btn').disabled = true;
+        document.getElementById('verify_status').className = 'status-msg';
+        document.getElementById('verify_status').innerHTML = '';
+        document.getElementById('result_panel').classList.remove('active');
+    }
+
+    async function verifyData() {
+        const type = document.getElementById('vehicle_type').value;
+        const month = document.getElementById('month').value;
+        const btn = document.getElementById('verify_btn');
+        const status = document.getElementById('verify_status');
+
+        btn.classList.add('loading');
+        status.innerHTML = 'Checking TLC CDN...';
+        status.className = 'status-msg status-pending';
+
+        try {
+            const res = await fetch(`/api/verify_url?vehicle_type=${type}&month=${month}`);
+            const data = await res.json();
+
+            if (data.active) {
+                status.innerHTML = `✅ Parquet file verified at: <a href="${data.url}" target="_blank" style="color:var(--primary)">${data.url.split('/').pop()}</a>`;
+                status.className = 'status-msg status-ok';
+                document.getElementById('process_btn').disabled = false;
+            } else {
+                status.innerHTML = `❌ Data not found on CDN. (HTTP ${data.status_code || data.error})`;
+                status.className = 'status-msg status-error';
+                document.getElementById('process_btn').disabled = true;
+            }
+        } catch (e) {
+            status.innerHTML = `❌ Verification failed: ${e.message}`;
+            status.className = 'status-msg status-error';
+        } finally {
+            btn.classList.remove('loading');
+        }
+    }
+
+    async function runAnalysis() {
+        const type = document.getElementById('vehicle_type').value;
+        const month = document.getElementById('month').value;
+        const task = document.getElementById('task_desc').value;
+        const btn = document.getElementById('process_btn');
+        const verifyBtn = document.getElementById('verify_btn');
+        const resultPanel = document.getElementById('result_panel');
+        const answerArea = document.getElementById('answer_area');
+        const codeArea = document.getElementById('code_area');
+
+        if (!task.trim()) {
+            alert('Please enter an analytics task.');
+            return;
+        }
+
+        btn.classList.add('loading');
+        verifyBtn.disabled = true;
+        resultPanel.classList.remove('active');
+
+        try {
+            const url = `/api/analyze?vehicle_type=${type}&month=${month}&task=${encodeURIComponent(task)}&provider=anthropic`;
+            const res = await fetch(url, { method: 'POST' });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                answerArea.innerHTML = `<strong>Final Answer:</strong><br/>${data.result.answer.replace(/\n/g, '<br/>')}`;
+                codeArea.textContent = data.result.code || "No code returned.";
+                resultPanel.classList.add('active');
+                
+                // Scroll to results
+                resultPanel.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert(`Error: ${data.detail || JSON.stringify(data)}`);
+            }
+        } catch (e) {
+            alert(`Execution failed: ${e.message}`);
+        } finally {
+            btn.classList.remove('loading');
+            verifyBtn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>

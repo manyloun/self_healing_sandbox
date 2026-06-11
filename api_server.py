@@ -4,7 +4,7 @@ Runs on port 8100 for on-demand pipeline execution
 """
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
@@ -56,7 +56,49 @@ app.add_middleware(
 
 
 # ============================================================================
-# HEALTH & STATUS ENDPOINTS
+# FRONTEND & HEALTH ENDPOINTS
+# ============================================================================
+
+@app.get("/")
+async def serve_frontend():
+    """Serve the web UI at the root endpoint"""
+    if os.path.exists("index.html"):
+        return FileResponse("index.html")
+    raise HTTPException(status_code=404, detail="Frontend UI not found (index.html missing)")
+
+@app.get("/api/verify_url")
+async def verify_url(vehicle_type: str, month: int):
+    """Verify if a specific parquet file exists on the CDN"""
+    if vehicle_type not in ["green", "yellow", "fhv", "fhvhv", "hvfhv"]:
+        raise HTTPException(status_code=400, detail="Invalid vehicle_type")
+    if not 1 <= month <= 12:
+        raise HTTPException(status_code=400, detail="Invalid month")
+        
+    try:
+        # Import requests here to avoid changing top-level imports
+        import requests
+        from schema_specialist import SchemaSpecialist
+        
+        # We just need the URL logic, so any provider works (e.g. anthropic)
+        specialist = SchemaSpecialist("anthropic")
+        
+        # Fix hvfhv naming if needed
+        vt = "hvfhv" if vehicle_type == "fhvhv" else vehicle_type
+        
+        target_url = specialist.build_url(vt, month)
+        head_check = requests.head(target_url, timeout=5)
+        
+        is_active = head_check.status_code == 200
+        return {
+            "active": is_active,
+            "url": target_url,
+            "status_code": head_check.status_code
+        }
+    except Exception as e:
+        return {"active": False, "error": str(e)}
+
+# ============================================================================
+# STATUS ENDPOINTS
 # ============================================================================
 
 @app.get("/health")
