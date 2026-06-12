@@ -17,6 +17,13 @@ KNOWN TLC DATA MAPPINGS:
   5: Via / Via Transportation
   6: Juno (acquired by Gett; historical data only)
   7: Other / Miscellaneous Licensed Dispatch Provider
+- payment_type:
+  1: Credit card
+  2: Cash
+  3: No charge
+  4: Dispute
+  5: Unknown
+  6: Voided trip
 """
         formatted = ""
         if isinstance(schema_profile, dict):
