@@ -70,8 +70,8 @@ pipeline {
                     echo "📦 Deploying to Ubuntu server (192.168.6.51:8100)..."
                     withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         sh '''
-                            # Copy docker-compose and Dockerfile to Ubuntu
-                            scp -i ${SSH_KEY} -o StrictHostKeyChecking=no \
+                            # Copy docker-compose, Dockerfile, and skills to Ubuntu
+                            scp -r -i ${SSH_KEY} -o StrictHostKeyChecking=no \
                                 docker-compose.yml \
                                 Dockerfile \
                                 requirements.txt \
@@ -85,6 +85,7 @@ pipeline {
                                 monitor.py \
                                 mcp_server.py \
                                 index.html \
+                                .claude \
                                 ${SSH_USER}@192.168.6.51:${DEPLOYMENT_DIR}/
                         '''
                     }
