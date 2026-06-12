@@ -403,6 +403,7 @@
         <div class="tab active" onclick="switchTab('runner')">Analytics Runner</div>
         <div class="tab" onclick="switchTab('monitor')">System Monitor</div>
         <div class="tab" onclick="switchTab('cache')">Cache Manager</div>
+        <div class="tab" onclick="switchTab('favorites')">⭐ Favorites</div>
         <div class="tab" onclick="switchTab('guide')">API User Guide</div>
     </div>
 
@@ -576,6 +577,29 @@
         </div>
     </div>
 
+    <!-- Favorites Tab -->
+    <div id="favorites" class="tab-content">
+        <div class="glass-panel">
+            <h2 style="margin-top: 0;">⭐ Favorites</h2>
+            <p style="color: var(--text-muted);">Your saved custom reports go here. These are protected from being cleared.</p>
+            <div style="overflow-x: auto;">
+                <table class="exec-table">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Size (Bytes)</th>
+                            <th>Last Modified</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="favorites_tbody">
+                        <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- User Guide Tab -->
     <div id="guide" class="tab-content">
         <div class="glass-panel guide-section">
@@ -729,18 +753,23 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
             const res = await fetch('/api/cache');
             const data = await res.json();
             
-            const tbody = document.getElementById('cache_tbody');
-            tbody.innerHTML = '';
+            const cacheTbody = document.getElementById('cache_tbody');
+            const favTbody = document.getElementById('favorites_tbody');
+            
+            cacheTbody.innerHTML = '';
+            favTbody.innerHTML = '';
 
             if(data.files.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">Code cache is currently empty.</td></tr>';
+                cacheTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">Code cache is empty.</td></tr>';
+                favTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No favorites yet. Rename a script in the Cache Manager to save it here!</td></tr>';
                 return;
             }
 
+            let cacheCount = 0;
+            let favCount = 0;
+
             data.files.forEach(file => {
                 const tr = document.createElement('tr');
-                
-                // Format datetime
                 const date = new Date(file.modified_at);
                 const timeString = date.toLocaleString();
                 
@@ -754,8 +783,20 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
                         <button onclick="deleteCacheFile('${file.filename}')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 0.25rem 0.5rem; font-size: 0.8rem;">🗑️ Delete</button>
                     </td>
                 `;
-                tbody.appendChild(tr);
+                
+                // If it matches the auto-generated pattern (e.g., yellow_1234abcd.py)
+                if (/^[a-z]+_[a-f0-9]{8}.*\.py$/.test(file.filename)) {
+                    cacheTbody.appendChild(tr);
+                    cacheCount++;
+                } else {
+                    favTbody.appendChild(tr);
+                    favCount++;
+                }
             });
+
+            if(cacheCount === 0) cacheTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">Code cache is currently empty.</td></tr>';
+            if(favCount === 0) favTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No favorites yet. Rename a script in the Cache Manager to save it here!</td></tr>';
+
         } catch (e) {
             console.error("Failed to load cache data", e);
         }

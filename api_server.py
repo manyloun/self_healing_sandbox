@@ -401,18 +401,18 @@ def run_cached_script(filename: str, vehicle_type: str, month: int):
                     if vt_code == "green": return "Green"
                     return "High Volume For-Hire"
                 
-                old_vt_display = get_vt_display(old_vt)
                 new_vt_display = get_vt_display(vt)
                 
-                # Replace month strings (Title case, lower case, upper case)
-                content = content.replace(old_month_name, new_month_name)
-                content = content.replace(old_month_name.lower(), new_month_name.lower())
-                content = content.replace(old_month_name.upper(), new_month_name.upper())
+                # Aggressively replace ANY month string followed by 2026 to fix stuck titles
+                for m in months:
+                    content = content.replace(f"{m} 2026", f"{new_month_name} 2026")
+                    content = content.replace(f"{m.upper()} 2026", f"{new_month_name.upper()} 2026")
+                    content = content.replace(f"{m} Taxi", f"{new_month_name} Taxi")
                 
-                # Replace VT strings
-                content = content.replace(old_vt_display, new_vt_display)
-                content = content.replace(old_vt_display.lower(), new_vt_display.lower())
-                content = content.replace(old_vt_display.upper(), new_vt_display.upper())
+                # Aggressively replace ANY vehicle type string
+                for old_v in ["Yellow", "Green", "High Volume For-Hire"]:
+                    content = content.replace(f"{old_v} Taxi Data", f"{new_vt_display} Taxi Data")
+                    content = content.replace(f"{old_v.upper()} TAXI DATA", f"{new_vt_display.upper()} TAXI DATA")
             
         # Swap out the URL itself using the regex
         content = re.sub(pattern, target_url, content)
@@ -479,16 +479,19 @@ async def clear_all_cache():
     if not os.path.exists(cache_dir):
         return {"status": "success", "deleted_count": 0}
         
+    import re
     deleted_count = 0
     errors = []
     for filename in os.listdir(cache_dir):
         if filename.endswith(".py"):
-            filepath = os.path.join(cache_dir, filename)
-            try:
-                os.remove(filepath)
-                deleted_count += 1
-            except Exception as e:
-                errors.append(str(e))
+            # Only delete files that look like auto-generated cache (e.g. yellow_1234abcd_5678efgh.py)
+            if re.match(r'^[a-z]+_[a-f0-9]{8}.*\.py$', filename):
+                filepath = os.path.join(cache_dir, filename)
+                try:
+                    os.remove(filepath)
+                    deleted_count += 1
+                except Exception as e:
+                    errors.append(str(e))
                 
     if errors:
         return {"status": "partial_success", "deleted_count": deleted_count, "errors": errors}
