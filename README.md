@@ -4,12 +4,22 @@ This repository showcases a production-grade, self-healing data analytics engine
 
 Engineered explicitly using **Claude Haiku 4.5** as a decoupled orchestration controller, the framework maps directly to enterprise data platform paradigms utilized across Databricks and Azure environments.
 
-## 🆕 Latest Features (v2.1)
+## 🆕 Latest Features (v2.2)
 
-### 🖥️ Web UI Dashboard & Cache Manager
+### 🖥️ Web UI Dashboard & Cache Management
 - **Interactive Web Dashboard**: Built-in HTML UI with a clean, glassmorphism design for running analytics pipelines locally or remotely.
-- **Cache Manager Tab**: Manage, view, and delete cached LLM-generated code scripts directly from the browser UI.
-- **Demo Prompts**: Quick-fill demo chips for Standard Text, HTML Grids, and Chart.js Data Visualizations.
+- **⭐ Favorites System**: Renaming an auto-generated script permanently saves it to a protected Favorites tab. 
+- **Quick-Run Workflows**: You can reuse any Favorite script on a *new* data month or vehicle type directly from the main dashboard dropdown. The backend safely executes Regex swaps on the dataset URLs and aggressively updates the hardcoded HTML title strings so the resulting charts are perfectly labeled for the new target data!
+- **Cache Transparency**: Reports generated from cache are dynamically badged with a floating `⚡ Cached Run` overlay.
+- **🔍 Details Viewer**: A custom Prism.js-powered modal allows you to inspect the syntax-highlighted Python code of any cached script, alongside the exact Original User Prompt that generated it.
+- **Fail-Safe Deletions**: The `🗑️ Clear Entire Cache` button features a strict `DELETE` typing requirement to prevent accidental wipes of the sandbox.
+
+### 🧠 Intelligent Data Context Injection
+- **No-Join Semantic Mapping**: The backend orchestrator automatically injects the official NYC TLC Data Dictionaries (e.g., `VendorID: 1=CMT, 2=VeriFone` and `payment_type: 1=Credit Card, 2=Cash`) directly into the LLM's system prompt context window. 
+- Claude natively maps the physical integers into human-readable labels when generating charts and data tables, eliminating the need for relational database JOIN operations!
+
+### 🤖 Unconstrained MCP Testing
+- **General Intelligence Bypass**: A dedicated "Run MCP Test" workflow allows users to bypass the strict Data Analyst prompt guidelines and query the agent for general-purpose logic tests and system status evaluations.
 
 ### 🛡️ Robust Code Extraction
 - **Regex-based Code Parsing**: The Orchestrator automatically intercepts and extracts clean Python code using Regex, preventing failures when the LLM attempts to wrap code in markdown formatting or conversational filler text.
@@ -18,6 +28,7 @@ Engineered explicitly using **Claude Haiku 4.5** as a decoupled orchestration co
 ### Smart Schema & Code Caching
 - **AVRO Schema Versioning**: Automatically extracts parquet schemas and stores them as `.avsc` files with SHA256 hashes in the `schema/` folder
 - **Hash-Based Code Caching**: Generated code is cached in `code_cache/` using schema hash as the key
+- **Prompt Memory**: Original user prompts are persisted inside the cached Python scripts as docstrings for complete auditability.
 - **Intelligent Reuse**: Subsequent runs with identical schemas skip Claude API calls entirely, using cached code instead ⚡
 
 ### API Usage Tracking & Monitoring
