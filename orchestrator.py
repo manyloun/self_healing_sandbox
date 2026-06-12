@@ -16,25 +16,29 @@ def _ensure_code_cache_dir():
     if not os.path.exists(CODE_CACHE_DIR):
         os.makedirs(CODE_CACHE_DIR)
 
-def _get_cached_code(vehicle_type: str, schema_hash: str) -> str:
-    """Try to retrieve cached code for this vehicle type and schema hash"""
+def _get_cached_code(vehicle_type: str, schema_hash: str, user_task: str) -> str:
+    """Try to retrieve cached code for this vehicle type, schema hash, and user task"""
     _ensure_code_cache_dir()
-    cache_file = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}.py")
+    import hashlib
+    task_hash = hashlib.md5(user_task.encode()).hexdigest()[:8]
+    cache_file = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}_{task_hash}.py")
     
     if os.path.exists(cache_file):
         with open(cache_file, 'r') as f:
             return f.read()
     return None
 
-def _save_cached_code(vehicle_type: str, schema_hash: str, code: str):
+def _save_cached_code(vehicle_type: str, schema_hash: str, user_task: str, code: str):
     """Save successfully executed code to cache"""
     _ensure_code_cache_dir()
-    cache_file = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}.py")
+    import hashlib
+    task_hash = hashlib.md5(user_task.encode()).hexdigest()[:8]
+    cache_file = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}_{task_hash}.py")
     
     with open(cache_file, 'w') as f:
         f.write(code)
     
-    print(f"💾 [Orchestrator]: Cached code for {vehicle_type} (hash: {schema_hash})")
+    print(f"💾 [Orchestrator]: Cached code for {vehicle_type} (hash: {schema_hash}, task_hash: {task_hash})")
 
 def run_multi_agent_pipeline(provider_name: str, vehicle_type: str, month: int, user_task: str):
     eye_agent = SchemaSpecialist(provider_name)
@@ -51,7 +55,7 @@ def run_multi_agent_pipeline(provider_name: str, vehicle_type: str, month: int, 
     print(f"🔐 [Orchestrator] Schema hash: {schema_hash}")
     
     # Check for cached code
-    cached_code = _get_cached_code(vehicle_type, schema_hash)
+    cached_code = _get_cached_code(vehicle_type, schema_hash, user_task)
     if cached_code:
         print(f"\n{'='*70}")
         print(f"✅ [Orchestrator]: USING CACHED CODE (No Claude API call needed)")
@@ -62,7 +66,9 @@ def run_multi_agent_pipeline(provider_name: str, vehicle_type: str, month: int, 
         
         if result["success"]:
             print(f"🎉 [Orchestrator]: Cached code executed successfully for domain {vehicle_type.upper()}.")
-            code_path = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}.py")
+            import hashlib
+            task_hash = hashlib.md5(user_task.encode()).hexdigest()[:8]
+            code_path = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}_{task_hash}.py")
             usage_tracker.save_session(vehicle_type, month, user_task, True, schema_hash, code_path)
             return {
                 "answer": result["output"],
@@ -115,9 +121,11 @@ def run_multi_agent_pipeline(provider_name: str, vehicle_type: str, month: int, 
         
         if result["success"]:
             # Code executed successfully - cache it
-            _save_cached_code(vehicle_type, schema_hash, raw_code)
+            _save_cached_code(vehicle_type, schema_hash, user_task, raw_code)
             print(f"🎉 [Orchestrator]: Job validation successful for domain {vehicle_type.upper()}.")
-            code_path = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}.py")
+            import hashlib
+            task_hash = hashlib.md5(user_task.encode()).hexdigest()[:8]
+            code_path = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}_{task_hash}.py")
             usage_tracker.save_session(vehicle_type, month, user_task, True, schema_hash, code_path)
             return {
                 "answer": result["output"],
