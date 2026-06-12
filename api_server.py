@@ -384,16 +384,23 @@ def free_sample_data(url: str):
         
         # Generate HTML table manually
         html = "<h3>🆓 Free Sample Data (0 API Cost)</h3>"
-        html += "<table border='1' style='border-collapse: collapse; width: 100%; text-align: left;'>"
+        html += "<style>"
+        html += "table { border-collapse: collapse; width: 100%; text-align: left; font-family: sans-serif; font-size: 14px; }"
+        html += "th, td { padding: 10px; border: 1px solid #e0e0e0; }"
+        html += "th { background-color: #e3f2fd; color: #0d47a1; font-weight: bold; }"
+        html += "tr:nth-child(even) { background-color: #f8f9fa; }"
+        html += "tr:hover { background-color: #f1f3f5; }"
+        html += "</style>"
+        html += "<table>"
         html += "<tr>"
         for col in columns:
-            html += f"<th style='padding: 8px; background-color: #f2f2f2;'>{col}</th>"
+            html += f"<th>{col}</th>"
         html += "</tr>"
         
         for row in result:
             html += "<tr>"
             for val in row:
-                html += f"<td style='padding: 8px;'>{val}</td>"
+                html += f"<td>{val}</td>"
             html += "</tr>"
         html += "</table>"
         
