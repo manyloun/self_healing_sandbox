@@ -74,10 +74,12 @@ def get_stock_quote(ticker: str = "IBM") -> str:
     import urllib.request
     import json
     target_ticker = ticker.upper().strip()
-    api_key = "0X7OKVZY6EOQLDH6"
+    api_key = os.environ.get("ALPHAVANTAGE_API_KEY")
+    if not api_key:
+        return f"Error: ALPHAVANTAGE_API_KEY environment variable not set"
     
     # Correcting endpoint parameter pattern layout for AlphaVantage query parameters
-    url = f"https://alphavantage.co{target_ticker}&apikey={api_key}"
+    url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={target_ticker}&apikey={api_key}"
     
     try:
         req = urllib.request.Request(url)

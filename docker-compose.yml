@@ -14,6 +14,7 @@ services:
       # API keys are passed from host environment or Jenkins credentials
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ALPHAVANTAGE_API_KEY=${ALPHAVANTAGE_API_KEY:-}
     volumes:
       # Persist generated schemas
       - ./schema:/app/schema

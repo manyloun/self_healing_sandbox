@@ -8,54 +8,92 @@ class LLMProvider(ABC):
         pass
 
 class AnthropicProvider(LLMProvider):
+    async def _generate_with_mcp(self, client, system_prompt: str, user_prompt: str) -> tuple:
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        import json
+        import os
+
+        # We must use an absolute path or relative to current working directory
+        server_params = StdioServerParameters(
+            command="python",
+            args=["mcp_server.py"],
+            env={**os.environ} # Pass environment variables so it has ALPHAVANTAGE_API_KEY
+        )
+        
+        messages = [{"role": "user", "content": user_prompt}]
+        usage_stats = {"input_tokens": 0, "output_tokens": 0, "model": "claude-haiku-4-5"}
+        
+        async with stdio_client(server_params) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                mcp_tools = await session.list_tools()
+                
+                anthropic_tools = []
+                for tool in mcp_tools.tools:
+                    anthropic_tools.append({
+                        "name": tool.name,
+                        "description": tool.description,
+                        "input_schema": tool.inputSchema
+                    })
+                
+                while True:
+                    response = client.messages.create(
+                        model="claude-haiku-4-5", 
+                        max_tokens=2000,
+                        system=system_prompt,
+                        messages=messages,
+                        tools=anthropic_tools if anthropic_tools else None
+                    )
+                    
+                    usage_stats["input_tokens"] += response.usage.input_tokens
+                    usage_stats["output_tokens"] += response.usage.output_tokens
+                    
+                    if response.stop_reason != "tool_use":
+                        for block in response.content:
+                            if block.type == "text":
+                                return block.text, usage_stats
+                        return "", usage_stats
+                    
+                    # Claude wants to use a tool
+                    messages.append({"role": "assistant", "content": response.content})
+                    tool_results = []
+                    
+                    for block in response.content:
+                        if block.type == "tool_use":
+                            try:
+                                result = await session.call_tool(block.name, arguments=block.input)
+                                tool_result_text = "\n".join(
+                                    [c.text for c in result.content if hasattr(c, 'text')]
+                                )
+                                tool_results.append({
+                                    "type": "tool_result",
+                                    "tool_use_id": block.id,
+                                    "content": tool_result_text
+                                })
+                            except Exception as e:
+                                tool_results.append({
+                                    "type": "tool_result",
+                                    "tool_use_id": block.id,
+                                    "content": f"Error: {e}",
+                                    "is_error": True
+                                })
+                    
+                    messages.append({"role": "user", "content": tool_results})
+
     def generate_code(self, system_prompt: str, user_prompt: str) -> tuple:
         from anthropic import Anthropic, AuthenticationError
+        import asyncio
         
         api_key = os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
-            raise RuntimeError(
-                "\n" + "="*70 +
-                "\n🔑 ANTHROPIC API KEY NOT FOUND" +
-                "\n" + "="*70 +
-                "\nThe ANTHROPIC_API_KEY environment variable is not set." +
-                "\n\nTo fix this, run one of the following:" +
-                "\n\n  PowerShell:" +
-                "\n  $env:ANTHROPIC_API_KEY = 'your-api-key-here'" +
-                "\n\n  Command Prompt:" +
-                "\n  set ANTHROPIC_API_KEY=your-api-key-here" +
-                "\n\nGet your API key at: https://console.anthropic.com/keys" +
-                "\n" + "="*70 + "\n"
-            )
+            raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set.")
         
         try:
             client = Anthropic(api_key=api_key)
-            message = client.messages.create(
-                model="claude-haiku-4-5", 
-                max_tokens=2000,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_prompt}]
-            )
-            # Extract usage stats from response
-            usage_stats = {
-                "input_tokens": message.usage.input_tokens,
-                "output_tokens": message.usage.output_tokens,
-                "model": "claude-haiku-4-5"
-            }
-            # FIX: Extract the text field from the first item in the content list
-            return message.content[0].text, usage_stats
+            return asyncio.run(self._generate_with_mcp(client, system_prompt, user_prompt))
         except AuthenticationError as e:
-            raise RuntimeError(
-                "\n" + "="*70 +
-                "\n❌ ANTHROPIC AUTHENTICATION FAILED" +
-                "\n" + "="*70 +
-                "\nYour API key is invalid or expired." +
-                "\n\nPlease:" +
-                "\n  1. Visit https://console.anthropic.com/keys" +
-                "\n  2. Generate a new API key" +
-                "\n  3. Update your ANTHROPIC_API_KEY environment variable" +
-                "\n\nError details: " + str(e) +
-                "\n" + "="*70 + "\n"
-            )
+            raise RuntimeError(f"Anthropic Authentication Failed: {e}")
 
 
 class OpenAIProvider(LLMProvider):

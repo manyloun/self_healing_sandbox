@@ -96,7 +96,8 @@ pipeline {
                 script {
                     echo "⚡ Starting Docker containers..."
                     withCredentials([
-                        string(credentialsId: 'anthropic-api-key', variable: 'ANTHROPIC_KEY')
+                        string(credentialsId: 'anthropic-api-key', variable: 'ANTHROPIC_KEY'),
+                        string(credentialsId: 'alphavantage-api-key', variable: 'ALPHAVANTAGE_KEY')
                     ]) {
                         withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                             sh '''
@@ -111,6 +112,7 @@ pipeline {
                                     
                                     echo "🌍 Setting environment variables..."
                                     export ANTHROPIC_API_KEY="${ANTHROPIC_KEY}"
+                                    export ALPHAVANTAGE_API_KEY="${ALPHAVANTAGE_KEY}"
                                     
                                     echo "📝 Creating log files if missing or empty..."
                                     if [ ! -s api_usage.json ]; then echo "{}" > api_usage.json; fi
