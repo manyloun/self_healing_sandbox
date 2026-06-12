@@ -1,0 +1,23 @@
+---
+name: sample-data
+description: Fetches a sample of rows from a specified dataset URL. Use this when the user asks for sample data or rows from a dataset.
+---
+
+# Sample Data Fetching Workflow
+
+When the user asks for sample data (e.g., "Get 10 rows sample data for the following dataset"), follow these steps:
+
+## Step 1: Identify Dataset and Row Count
+1. Extract the dataset URL from the system context (which is provided via the hidden prefix from the UI).
+2. Extract the number of rows requested by the user. If the user just says "Get sample data", default to fetching **10 rows**.
+
+## Step 2: Query the Database
+Use the `query_db` MCP tool to query the parquet dataset. 
+- You MUST pass the parquet URL into the `query_db` tool (if using the parquet_url parameter, the table will be exposed as `nyc_data`).
+- Construct the SQL query using DuckDB syntax to select the specified number of rows:
+  ```sql
+  SELECT * FROM nyc_data LIMIT {row_count};
+  ```
+
+## Step 3: Output Formatting
+Format the results neatly. You must output the final result strictly as a beautiful HTML dashboard (or an HTML table) utilizing the fetched sample data. Never wrap the final output in ```html codeblocks, just return the raw HTML string so it renders correctly in the UI's Visual tab.

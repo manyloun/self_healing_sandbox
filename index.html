@@ -989,7 +989,7 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
             const data = await res.json();
 
             if (data.active) {
-                status.innerHTML = `✅ Parquet file verified at: <a href="${data.url}" target="_blank" style="color:var(--primary)">${data.url.split('/').pop()}</a>`;
+                status.innerHTML = `✅ Parquet file verified at: <a href="${data.url}" target="_blank" style="color:var(--primary)">${data.url.split('/').pop()}</a> <span style="font-size: 0.8em; margin-left: 10px; cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="fillTask('Get 10 rows sample data for the following dataset')">(get sample data)</span>`;
                 status.className = 'status-msg status-ok';
                 document.getElementById('process_btn').disabled = false;
             } else {
