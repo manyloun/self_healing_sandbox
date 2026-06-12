@@ -1193,11 +1193,10 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
                 <h4 style="margin-top:0; margin-bottom:0.5rem; color:#a78bfa;">Original Prompt</h4>
                 <div id="modal_prompt" style="font-family: 'Inter', sans-serif; color: var(--text-main); white-space: pre-wrap; font-size: 0.95rem;"></div>
             </div>
-            
-            <div style="flex:1; display:flex; flex-direction:column; min-height:400px; max-height:60vh;">
+            <div style="margin-top: 1.5rem;">
                 <h4 style="margin-top:0; margin-bottom:0.5rem; color:#60a5fa;">Generated Code</h4>
-                <div style="flex:1; border-radius:8px; overflow:hidden; border: 1px solid var(--border-color); background: #1d1f21;">
-                    <pre class="line-numbers" style="margin:0; padding:1rem; height:100%; overflow:auto;"><code class="language-python" id="modal_code"></code></pre>
+                <div style="border-radius:8px; overflow:hidden; border: 1px solid var(--border-color); background: #1d1f21;">
+                    <pre class="line-numbers" style="margin:0; overflow:auto; max-height:60vh; padding-top:1rem; padding-bottom:1rem; padding-right:1rem;"><code class="language-python" id="modal_code"></code></pre>
                 </div>
             </div>
         </div>
