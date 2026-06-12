@@ -462,6 +462,10 @@
                     <div class="spinner"></div>
                     <span>Run Analysis</span>
                 </button>
+                <button id="mcp_test_btn" onclick="runMcpTest()" style="background: var(--primary);">
+                    <div class="spinner"></div>
+                    <span>🤖 Run MCP Test</span>
+                </button>
             </div>
             <div id="verify_status" class="status-msg"></div>
         </div>
@@ -744,14 +748,88 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
                     <td style="font-family: monospace; color: #60a5fa;">${file.filename}</td>
                     <td>${file.size_bytes.toLocaleString()}</td>
                     <td>${timeString}</td>
-                    <td>
-                        <button onclick="deleteCacheFile('${file.filename}')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 0.25rem 0.5rem; font-size: 0.8rem;">Delete</button>
+                    <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button onclick="runCachedScript('${file.filename}')" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 0.25rem 0.5rem; font-size: 0.8rem;">🚀 Run</button>
+                        <button onclick="renameCacheFile('${file.filename}')" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.25rem 0.5rem; font-size: 0.8rem;">✏️ Rename</button>
+                        <button onclick="deleteCacheFile('${file.filename}')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 0.25rem 0.5rem; font-size: 0.8rem;">🗑️ Delete</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         } catch (e) {
             console.error("Failed to load cache data", e);
+        }
+    }
+
+    async function renameCacheFile(oldName) {
+        let newName = prompt(`Enter new filename for ${oldName}:\n(e.g., Awesome_Report.py)`, oldName);
+        if (!newName || newName === oldName) return;
+        
+        try {
+            const url = `/api/cache/${encodeURIComponent(oldName)}/rename?new_name=${encodeURIComponent(newName)}`;
+            const res = await fetch(url, { method: 'POST' });
+            if (res.ok) {
+                loadCacheData(); // Refresh list
+            } else {
+                const err = await res.json();
+                alert(`Error renaming file: ${err.detail}`);
+            }
+        } catch (e) {
+            alert(`Network error: ${e.message}`);
+        }
+    }
+
+    async function runCachedScript(filename) {
+        // Read the currently selected options from the main dashboard
+        const type = document.getElementById('vehicle_type').value;
+        const month = document.getElementById('month').value;
+        
+        if(!confirm(`Run ${filename} using the currently selected data?\n\nVehicle Type: ${type}\nMonth: 2026-${month.padStart(2, '0')}`)) {
+            return;
+        }
+
+        // Switch to the runner tab automatically to see the result
+        switchTab('runner');
+        
+        const btn = document.getElementById('process_btn');
+        const verifyBtn = document.getElementById('verify_btn');
+        const resultPanel = document.getElementById('result_panel');
+        const visualIframe = document.getElementById('visual_iframe');
+        const answerArea = document.getElementById('answer_area');
+        const codeArea = document.getElementById('code_area');
+        const idBadge = document.getElementById('exec_id_badge');
+
+        btn.classList.add('loading');
+        verifyBtn.disabled = true;
+        btn.disabled = true;
+        resultPanel.classList.remove('active');
+        visualIframe.srcdoc = '';
+        answerArea.textContent = '';
+        codeArea.textContent = '';
+
+        try {
+            const url = `/api/analyze/cached?filename=${encodeURIComponent(filename)}&vehicle_type=${type}&month=${month}`;
+            const res = await fetch(url, { method: 'POST' });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                idBadge.textContent = `Execution ID: ${data.execution_id}`;
+                answerArea.textContent = data.result || "No output returned.";
+                const htmlContent = extractHtml(data.result || "");
+                visualIframe.srcdoc = htmlContent;
+                codeArea.textContent = "Executed Cached File:\n" + filename;
+                
+                resultPanel.classList.add('active');
+                switchResultTab('v-output');
+            } else {
+                alert(`Error: ${data.detail || 'Unknown error'}`);
+            }
+        } catch (e) {
+            alert(`Network error: ${e.message}`);
+        } finally {
+            btn.classList.remove('loading');
+            verifyBtn.disabled = false;
+            btn.disabled = false;
         }
     }
 
@@ -844,6 +922,60 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
             return text.replace(/\n/g, '<br/>');
         }
         return text;
+    }
+
+    async function runMcpTest() {
+        const task = document.getElementById('task_desc').value;
+        const btn = document.getElementById('mcp_test_btn');
+        const verifyBtn = document.getElementById('verify_btn');
+        const processBtn = document.getElementById('process_btn');
+        const resultPanel = document.getElementById('result_panel');
+        
+        const visualIframe = document.getElementById('visual_iframe');
+        const answerArea = document.getElementById('answer_area');
+        const codeArea = document.getElementById('code_area');
+        const idBadge = document.getElementById('exec_id_badge');
+
+        if (!task.trim()) {
+            alert('Please enter an MCP test prompt.');
+            return;
+        }
+
+        btn.classList.add('loading');
+        verifyBtn.disabled = true;
+        processBtn.disabled = true;
+        resultPanel.classList.remove('active');
+        
+        visualIframe.srcdoc = '';
+        answerArea.textContent = '';
+        codeArea.textContent = '';
+
+        try {
+            const url = `/api/mcp-test?prompt=${encodeURIComponent(task)}`;
+            const res = await fetch(url, { method: 'POST' });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                idBadge.textContent = `Execution ID: MCP-Test`;
+                answerArea.textContent = data.result;
+                
+                // For MCP tests, we just expect the result to be raw HTML
+                const htmlContent = extractHtml(data.result);
+                visualIframe.srcdoc = htmlContent;
+                codeArea.textContent = "Bypassed Python Script Generation. Claude outputted HTML directly.";
+                
+                resultPanel.classList.add('active');
+                switchResultTab('v-output');
+            } else {
+                alert(`Error: ${data.detail || 'Unknown error'}`);
+            }
+        } catch (e) {
+            alert(`Network error: ${e.message}`);
+        } finally {
+            btn.classList.remove('loading');
+            verifyBtn.disabled = false;
+            processBtn.disabled = false;
+        }
     }
 
     async function runAnalysis() {

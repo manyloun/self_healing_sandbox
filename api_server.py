@@ -273,6 +273,20 @@ def analyze_data(
         raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
 
 
+@app.post("/api/mcp-test")
+def mcp_test(prompt: str):
+    """Bypass the orchestrator completely and let Claude act as a general agent with tools."""
+    from providers import LLMFactory
+    
+    llm = LLMFactory.get_provider("anthropic")
+    system_prompt = "You are a helpful AI assistant equipped with real-time MCP tools. Answer the user's request. Always output the final result strictly as a beautiful HTML dashboard utilizing the tool data you fetched. Never wrap the final output in ```html codeblocks, just return the raw html string."
+    
+    try:
+        result, stats = llm.generate_code(system_prompt, prompt)
+        return {"status": "success", "result": result, "usage": stats}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # CACHE MANAGEMENT ENDPOINTS
 # ============================================================================
@@ -296,6 +310,91 @@ async def list_cache():
             })
     
     return {"files": sorted(files_info, key=lambda x: x["modified_at"], reverse=True)}
+
+@app.post("/api/cache/{filename}/rename")
+def rename_cache_file(filename: str, new_name: str):
+    """Rename a cached python script"""
+    import re
+    if not filename.endswith(".py") or ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Invalid old filename")
+    
+    if not new_name.endswith(".py"):
+        new_name += ".py"
+        
+    # Sanitize new name (allow alphanumeric, underscores, hyphens)
+    if not re.match(r'^[\w\-]+\.py$', new_name):
+        raise HTTPException(status_code=400, detail="Invalid new filename")
+
+    old_path = os.path.join("code_cache", filename)
+    new_path = os.path.join("code_cache", new_name)
+    
+    if not os.path.exists(old_path):
+        raise HTTPException(status_code=404, detail="Original file not found")
+        
+    try:
+        os.rename(old_path, new_path)
+        return {"status": "success", "new_name": new_name}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Rename failed: {str(e)}")
+
+@app.post("/api/analyze/cached")
+def run_cached_script(filename: str, vehicle_type: str, month: int):
+    """Run an existing script on a new target month/vehicle_type"""
+    import re
+    if not filename.endswith(".py") or ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    filepath = os.path.join("code_cache", filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    from schema_specialist import SchemaSpecialist
+    from sandbox import Sandbox
+    
+    specialist = SchemaSpecialist("anthropic") # Provider doesn't matter for URL building
+    vt = "hvfhv" if vehicle_type == "fhvhv" else vehicle_type
+    target_url = specialist.build_url(vt, month)
+
+    # Regex string replacement inside the Python script to swap the parquet URL
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Swap out any existing TripData parquet URL with the newly requested one
+        pattern = r"https://d37ci6vzurychx\.cloudfront\.net/trip-data/[a-z]+_tripdata_2026-\d{2}\.parquet"
+        content = re.sub(pattern, target_url, content)
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+            
+        # Execute the modified script
+        sandbox = Sandbox()
+        result = sandbox.execute_script(filepath)
+        
+        # Log it as a cached execution
+        execution_id = usage_tracker._generate_execution_id()
+        log_entry = {
+            "execution_id": execution_id,
+            "timestamp": datetime.now().isoformat(),
+            "vehicle_type": vehicle_type,
+            "month": month,
+            "task": f"Cached Run: {filename}",
+            "provider": "cache",
+            "api_called": False,
+            "total_cost": 0,
+            "result_summary": result[:100] + "..." if len(result) > 100 else result
+        }
+        usage_tracker._save_execution_log(log_entry)
+        
+        return {
+            "status": "success",
+            "execution_id": execution_id,
+            "vehicle_type": vehicle_type,
+            "month": month,
+            "result": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/cache/{filename}")
 async def delete_cache_file(filename: str):
