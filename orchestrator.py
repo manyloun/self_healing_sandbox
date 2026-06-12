@@ -109,12 +109,14 @@ def run_multi_agent_pipeline(provider_name: str, vehicle_type: str, month: int, 
             attempt
         )
         
-        lines = raw_code.strip().split("\n")
-        if lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines[-1].startswith("```"):
-            lines = lines[:-1]
-        raw_code = "\n".join(lines)
+        import re
+        # Try to extract code block if Claude wrapped it despite instructions
+        code_match = re.search(r'```(?:python)?\s*\n(.*?)\n```', raw_code, re.DOTALL)
+        if code_match:
+            raw_code = code_match.group(1)
+        else:
+            # Fallback to simple strip if no code block markers found
+            raw_code = raw_code.strip()
             
         print("⚡ [Orchestrator]: Running code inside Safe Sandbox...")
         result = SafeSandbox.execute(raw_code)
@@ -136,7 +138,7 @@ def run_multi_agent_pipeline(provider_name: str, vehicle_type: str, month: int, 
         current_task_prompt = f"Your code failed: {result['error']}\nPlease rewrite it and fix the bugs."
 
     usage_tracker.save_session(vehicle_type, month, user_task, False, schema_hash, "")
-    raise RuntimeError("Multi-Agent pipeline failed to converge after 3 attempts.")
+    raise RuntimeError(f"Multi-Agent pipeline failed to converge after 3 attempts. Last Sandbox Error: {result.get('error', 'Unknown error')}")
 
 if __name__ == "__main__":
     print("\n==================== NYC TLC PIPELINE DEVELOPMENT MODE ==========================")
