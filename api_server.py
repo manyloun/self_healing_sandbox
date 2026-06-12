@@ -367,6 +367,59 @@ def skills_test(prompt: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/free-sample-data")
+def free_sample_data(url: str):
+    """Fetch sample data natively via DuckDB with 0 API cost."""
+    import duckdb
+    try:
+        conn = duckdb.connect(database=':memory:')
+        conn.execute("INSTALL httpfs;")
+        conn.execute("LOAD httpfs;")
+        
+        # Run the query
+        result = conn.execute(f"SELECT * FROM read_parquet('{url}') LIMIT 10;").fetchall()
+        description = conn.description
+        columns = [col[0] for col in description]
+        conn.close()
+        
+        # Generate HTML table manually
+        html = "<h3>🆓 Free Sample Data (0 API Cost)</h3>"
+        html += "<table border='1' style='border-collapse: collapse; width: 100%; text-align: left;'>"
+        html += "<tr>"
+        for col in columns:
+            html += f"<th style='padding: 8px; background-color: #f2f2f2;'>{col}</th>"
+        html += "</tr>"
+        
+        for row in result:
+            html += "<tr>"
+            for val in row:
+                html += f"<td style='padding: 8px;'>{val}</td>"
+            html += "</tr>"
+        html += "</table>"
+        
+        # Log 0-cost execution
+        execution_id = usage_tracker._generate_execution_id()
+        log_entry = {
+            "execution_id": execution_id,
+            "timestamp": datetime.now().isoformat(),
+            "vehicle_type": "N/A",
+            "month": 0,
+            "task": f"Free Sample Data: {url}",
+            "success": True,
+            "api_called": False,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_cost": 0.0,
+            "api_calls_count": 0,
+            "code_hash": "",
+            "code_path": ""
+        }
+        usage_tracker._log_execution(log_entry)
+        
+        return {"status": "success", "result": html}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # CACHE MANAGEMENT ENDPOINTS
 # ============================================================================
