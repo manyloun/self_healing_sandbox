@@ -424,6 +424,12 @@ def run_cached_script(filename: str, vehicle_type: str, month: int):
         result_dict = SafeSandbox.execute(content)
         if result_dict["success"]:
             result = result_dict.get("output", "")
+            if isinstance(result, str):
+                badge = f'<div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5); padding: 5px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; z-index: 9999; pointer-events: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">⚡ Cached Run: {filename}</div>'
+                if "</body>" in result:
+                    result = result.replace("</body>", f"{badge}</body>")
+                else:
+                    result += badge
         else:
             result = f"Error: {result_dict.get('error', 'Unknown error')}\n\nStdout:\n{result_dict.get('stdout', '')}"
         

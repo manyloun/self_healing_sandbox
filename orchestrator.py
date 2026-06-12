@@ -68,10 +68,20 @@ def run_multi_agent_pipeline(provider_name: str, vehicle_type: str, month: int, 
             print(f"🎉 [Orchestrator]: Cached code executed successfully for domain {vehicle_type.upper()}.")
             import hashlib
             task_hash = hashlib.md5(user_task.encode()).hexdigest()[:8]
-            code_path = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}_{task_hash}.py")
+            filename = f"{vehicle_type}_{schema_hash}_{task_hash}.py"
+            code_path = os.path.join(CODE_CACHE_DIR, filename)
             usage_tracker.save_session(vehicle_type, month, user_task, True, schema_hash, code_path)
+            
+            output_html = result["output"]
+            if isinstance(output_html, str):
+                badge = f'<div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5); padding: 5px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; z-index: 9999; pointer-events: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">⚡ Cached Run: {filename}</div>'
+                if "</body>" in output_html:
+                    output_html = output_html.replace("</body>", f"{badge}</body>")
+                else:
+                    output_html += badge
+
             return {
-                "answer": result["output"],
+                "answer": output_html,
                 "code": cached_code
             }
         else:
