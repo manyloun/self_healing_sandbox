@@ -18,8 +18,10 @@ Engineered explicitly using **Claude Haiku 4.5** as a decoupled orchestration co
 - **No-Join Semantic Mapping**: The backend orchestrator automatically injects the official NYC TLC Data Dictionaries (e.g., `VendorID: 1=CMT, 2=VeriFone` and `payment_type: 1=Credit Card, 2=Cash`) directly into the LLM's system prompt context window. 
 - Claude natively maps the physical integers into human-readable labels when generating charts and data tables, eliminating the need for relational database JOIN operations!
 
-### 🤖 Unconstrained MCP Testing
+### 🤖 Unconstrained MCP Testing & Skills
 - **General Intelligence Bypass**: A dedicated "Run MCP Test" workflow allows users to bypass the strict Data Analyst prompt guidelines and query the agent for general-purpose logic tests and system status evaluations.
+- **Dedicated Skills Testing**: A distinct `/api/skills-test` endpoint explicitly injects `.claude/skills/` markdown files directly into the LLM system context, forcing the AI to perfectly execute strictly defined custom workflows (e.g., formatting HTML sample data).
+- **Cost-Optimized Native Workflows**: Features a parallel `/api/free-sample-data` endpoint that bypasses the LLM entirely, executing pure DuckDB queries and native HTML generation for **$0.00** API cost—demonstrating intelligent routing between expensive AI generation and cheap deterministic code.
 
 ### 🛡️ Robust Code Extraction
 - **Regex-based Code Parsing**: The Orchestrator automatically intercepts and extracts clean Python code using Regex, preventing failures when the LLM attempts to wrap code in markdown formatting or conversational filler text.
