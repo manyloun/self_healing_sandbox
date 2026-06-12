@@ -24,6 +24,9 @@ COPY orchestrator.py \
       index.html \
       ./
 
+# Copy Claude skills directory
+COPY .claude/ ./.claude/
+
 # Create directories for auto-generated files
 RUN mkdir -p schema code_cache
 
