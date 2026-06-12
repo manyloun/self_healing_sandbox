@@ -35,8 +35,11 @@ def _save_cached_code(vehicle_type: str, schema_hash: str, user_task: str, code:
     task_hash = hashlib.md5(user_task.encode()).hexdigest()[:8]
     cache_file = os.path.join(CODE_CACHE_DIR, f"{vehicle_type}_{schema_hash}_{task_hash}.py")
     
+    # Prepend the prompt to the code as a docstring so we can display it later
+    annotated_code = f'\"\"\"\nUSER_PROMPT: {user_task}\n\"\"\"\n\n{code}'
+    
     with open(cache_file, 'w') as f:
-        f.write(code)
+        f.write(annotated_code)
     
     print(f"💾 [Orchestrator]: Cached code for {vehicle_type} (hash: {schema_hash}, task_hash: {task_hash})")
 

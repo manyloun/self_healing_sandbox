@@ -332,6 +332,24 @@ async def list_cache():
     
     return {"files": sorted(files_info, key=lambda x: x["modified_at"], reverse=True)}
 
+@app.get("/api/cache/{filename}")
+def get_cache_file(filename: str):
+    """Get the contents of a cached python script"""
+    if not filename.endswith(".py") or ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    filepath = os.path.join("code_cache", filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return {"filename": filename, "content": content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/cache/{filename}/rename")
 def rename_cache_file(filename: str, new_name: str):
     """Rename a cached python script"""
