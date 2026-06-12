@@ -989,7 +989,7 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
             const data = await res.json();
 
             if (data.active) {
-                status.innerHTML = `✅ Parquet file verified at: <a href="${data.url}" target="_blank" style="color:var(--primary)">${data.url.split('/').pop()}</a> <span style="font-size: 0.8em; margin-left: 10px; cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="fillTask('Get 10 rows sample data for the following dataset')">(get sample data)</span>`;
+                status.innerHTML = `✅ Parquet file verified at: <a href="${data.url}" target="_blank" style="color:var(--primary)">${data.url.split('/').pop()}</a> <span style="font-size: 0.8em; margin-left: 10px; cursor: pointer; color: var(--primary); text-decoration: underline;" onclick="fetchSampleData('${data.url}')">(get sample data)</span>`;
                 status.className = 'status-msg status-ok';
                 document.getElementById('process_btn').disabled = false;
             } else {
@@ -1077,6 +1077,62 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
             btn.classList.remove('loading');
             verifyBtn.disabled = false;
             processBtn.disabled = false;
+        }
+    }
+
+    async function fetchSampleData(url) {
+        const verifyBtn = document.getElementById('verify_btn');
+        const processBtn = document.getElementById('process_btn');
+        const mcpBtn = document.getElementById('mcp_test_btn');
+        const resultPanel = document.getElementById('result_panel');
+        
+        const visualIframe = document.getElementById('visual_iframe');
+        const answerArea = document.getElementById('answer_area');
+        const codeArea = document.getElementById('code_area');
+        const idBadge = document.getElementById('exec_id_badge');
+        const status = document.getElementById('verify_status');
+
+        const task = `Get 10 rows sample data for the following dataset: ${url}`;
+
+        verifyBtn.disabled = true;
+        processBtn.disabled = true;
+        mcpBtn.disabled = true;
+        resultPanel.classList.remove('active');
+        
+        visualIframe.srcdoc = '';
+        answerArea.textContent = '';
+        codeArea.textContent = '';
+
+        const originalHtml = status.innerHTML;
+        status.innerHTML = 'Fetching sample data via skills-test...';
+        status.className = 'status-msg status-pending';
+
+        try {
+            const endpoint = `/api/skills-test?prompt=${encodeURIComponent(task)}`;
+            const res = await fetch(endpoint, { method: 'POST' });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                idBadge.textContent = `Execution ID: Sample-Data-Skill`;
+                answerArea.textContent = data.result;
+                
+                const htmlContent = extractHtml(data.result);
+                visualIframe.srcdoc = htmlContent;
+                codeArea.textContent = "Generated Sample Data HTML table via Skill.";
+                
+                resultPanel.classList.add('active');
+                switchResultTab('visual');
+            } else {
+                alert(`Error: ${data.detail || 'Unknown error'}`);
+            }
+        } catch (e) {
+            alert(`Network error: ${e.message}`);
+        } finally {
+            verifyBtn.disabled = false;
+            processBtn.disabled = false;
+            mcpBtn.disabled = false;
+            status.innerHTML = originalHtml;
+            status.className = 'status-msg status-ok';
         }
     }
 

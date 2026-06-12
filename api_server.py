@@ -322,6 +322,50 @@ def mcp_test(prompt: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/skills-test")
+def skills_test(prompt: str):
+    """Execute a skill using the instructions from SKILL.md."""
+    from providers import LLMFactory
+    
+    llm = LLMFactory.get_provider("anthropic")
+    
+    skill_path = os.path.join(".claude", "skills", "sample-data", "SKILL.md")
+    try:
+        with open(skill_path, 'r', encoding='utf-8') as f:
+            skill_content = f.read()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not read skill file: {e}")
+
+    # Inject the skill instructions into the system prompt
+    system_prompt = f"You are a specialized AI executing a specific Skill. Follow these instructions exactly:\n\n{skill_content}"
+    
+    try:
+        result, stats = llm.generate_code(system_prompt, prompt)
+        
+        execution_id = usage_tracker._generate_execution_id()
+        cost = stats["input_tokens"] * usage_tracker.CLAUDE_HAIKU_INPUT_COST + stats["output_tokens"] * usage_tracker.CLAUDE_HAIKU_OUTPUT_COST
+        
+        log_entry = {
+            "execution_id": execution_id,
+            "timestamp": datetime.now().isoformat(),
+            "vehicle_type": "N/A",
+            "month": 0,
+            "task": f"Skill Test: {prompt}",
+            "success": True,
+            "api_called": True,
+            "input_tokens": stats["input_tokens"],
+            "output_tokens": stats["output_tokens"],
+            "total_cost": cost,
+            "api_calls_count": 1,
+            "code_hash": "",
+            "code_path": ""
+        }
+        usage_tracker._log_execution(log_entry)
+        
+        return {"status": "success", "result": result, "usage": stats}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # CACHE MANAGEMENT ENDPOINTS
 # ============================================================================
