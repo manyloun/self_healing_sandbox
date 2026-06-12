@@ -33,16 +33,23 @@ def get_medallion_schema(domain_type: str) -> str:
     return f"Error: Domain partition schema '{domain_type}' not found inside metadata catalog."
 
 @app.tool()
-def query_db(sql: str) -> str:
-    """Execute an analytical query against the persistent local DuckDB database."""
+def query_db(sql: str, parquet_url: str = None) -> str:
+    """
+    Execute an analytical query using DuckDB. 
+    If a parquet_url is provided (e.g., 'https://.../yellow_tripdata_2026-01.parquet'),
+    it will be registered as a view named 'nyc_data' that you can query.
+    """
     import duckdb
     try:
-        # Create directory recursively if it doesn't exist to ensure safety on Windows 11
-        db_dir = os.path.dirname(DB_PATH)
-        if db_dir and not os.path.exists(db_dir):
-            os.makedirs(db_dir)
+        conn = duckdb.connect(database=':memory:')
+        
+        # Install and load httpfs to read from https URLs
+        conn.execute("INSTALL httpfs;")
+        conn.execute("LOAD httpfs;")
+        
+        if parquet_url:
+            conn.execute(f"CREATE VIEW nyc_data AS SELECT * FROM read_parquet('{parquet_url}')")
             
-        conn = duckdb.connect(database=DB_PATH)
         result = conn.execute(sql).fetchall()
         conn.close()
         return str(result)

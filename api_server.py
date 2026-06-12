@@ -244,12 +244,26 @@ def analyze_data(
         )
 
     try:
+        from schema_specialist import SchemaSpecialist
+        
+        specialist = SchemaSpecialist(provider)
+        vt = "hvfhv" if vehicle_type == "fhvhv" else vehicle_type
+        target_url = specialist.build_url(vt, month)
+        
+        # Method 1: Hidden Prefix Method
+        # We prepend the URL so the LLM knows exactly what data the user is referring to
+        augmented_task = (
+            f"[System Context: The user is currently analyzing the following dataset in the UI: {target_url} . "
+            f"Use this URL if you need to query the database with query_db.]\n\n"
+            f"User Request: {task}"
+        )
+
         # Run the pipeline
         result = orchestrator.run_multi_agent_pipeline(
             provider_name=provider,
             vehicle_type=vehicle_type,
             month=month,
-            user_task=task
+            user_task=augmented_task
         )
 
         execution_id = usage_tracker._generate_execution_id()
