@@ -157,7 +157,7 @@ async def get_costs():
 # ============================================================================
 
 @app.post("/api/analyze")
-async def analyze_data(
+def analyze_data(
     vehicle_type: str,
     month: int,
     task: str,
