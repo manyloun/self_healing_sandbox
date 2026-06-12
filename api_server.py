@@ -285,20 +285,24 @@ def mcp_test(prompt: str):
         result, stats = llm.generate_code(system_prompt, prompt)
         
         execution_id = usage_tracker._generate_execution_id()
-        cost = usage_tracker._calculate_cost(stats["model"], stats["input_tokens"], stats["output_tokens"])
+        cost = stats["input_tokens"] * usage_tracker.CLAUDE_HAIKU_INPUT_COST + stats["output_tokens"] * usage_tracker.CLAUDE_HAIKU_OUTPUT_COST
         
         log_entry = {
             "execution_id": execution_id,
             "timestamp": datetime.now().isoformat(),
             "vehicle_type": "N/A",
-            "month": "N/A",
+            "month": 0,
             "task": f"MCP Test: {prompt}",
-            "provider": "anthropic",
+            "success": True,
             "api_called": True,
+            "input_tokens": stats["input_tokens"],
+            "output_tokens": stats["output_tokens"],
             "total_cost": cost,
-            "result_summary": "Generated MCP HTML Dashboard"
+            "api_calls_count": 1,
+            "code_hash": "",
+            "code_path": ""
         }
-        usage_tracker._save_execution_log(log_entry)
+        usage_tracker._log_execution(log_entry)
         
         return {"status": "success", "result": result, "usage": stats}
     except Exception as e:
@@ -399,12 +403,16 @@ def run_cached_script(filename: str, vehicle_type: str, month: int):
             "vehicle_type": vehicle_type,
             "month": month,
             "task": f"Cached Run: {filename}",
-            "provider": "cache",
+            "success": result_dict["success"],
             "api_called": False,
+            "input_tokens": 0,
+            "output_tokens": 0,
             "total_cost": 0,
-            "result_summary": result[:100] + "..." if len(result) > 100 else result
+            "api_calls_count": 0,
+            "code_hash": "",
+            "code_path": filepath
         }
-        usage_tracker._save_execution_log(log_entry)
+        usage_tracker._log_execution(log_entry)
         
         return {
             "status": "success",
