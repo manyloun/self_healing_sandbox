@@ -243,6 +243,69 @@ async def analyze_data(
 
 
 # ============================================================================
+# CACHE MANAGEMENT ENDPOINTS
+# ============================================================================
+
+@app.get("/api/cache")
+async def list_cache():
+    """List all Python scripts in the code cache"""
+    cache_dir = "code_cache"
+    if not os.path.exists(cache_dir):
+        return {"files": []}
+    
+    files_info = []
+    for filename in os.listdir(cache_dir):
+        if filename.endswith(".py"):
+            filepath = os.path.join(cache_dir, filename)
+            stat = os.stat(filepath)
+            files_info.append({
+                "filename": filename,
+                "size_bytes": stat.st_size,
+                "modified_at": datetime.fromtimestamp(stat.st_mtime).isoformat()
+            })
+    
+    return {"files": sorted(files_info, key=lambda x: x["modified_at"], reverse=True)}
+
+@app.delete("/api/cache/{filename}")
+async def delete_cache_file(filename: str):
+    """Safely delete a specific cached python script"""
+    if not filename.endswith(".py") or ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    filepath = os.path.join("code_cache", filename)
+    if os.path.exists(filepath):
+        try:
+            os.remove(filepath)
+            return {"status": "success", "message": f"Deleted {filename}"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to delete {filename}: {str(e)}")
+    else:
+        raise HTTPException(status_code=404, detail="File not found")
+
+@app.delete("/api/cache")
+async def clear_all_cache():
+    """Clear all cached python scripts"""
+    cache_dir = "code_cache"
+    if not os.path.exists(cache_dir):
+        return {"status": "success", "deleted_count": 0}
+        
+    deleted_count = 0
+    errors = []
+    for filename in os.listdir(cache_dir):
+        if filename.endswith(".py"):
+            filepath = os.path.join(cache_dir, filename)
+            try:
+                os.remove(filepath)
+                deleted_count += 1
+            except Exception as e:
+                errors.append(str(e))
+                
+    if errors:
+        return {"status": "partial_success", "deleted_count": deleted_count, "errors": errors}
+    return {"status": "success", "deleted_count": deleted_count}
+
+
+# ============================================================================
 # HISTORY & MONITORING ENDPOINTS
 # ============================================================================
 

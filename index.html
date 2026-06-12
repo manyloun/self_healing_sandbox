@@ -368,6 +368,7 @@
     <div class="tabs">
         <div class="tab active" onclick="switchTab('runner')">Analytics Runner</div>
         <div class="tab" onclick="switchTab('monitor')">System Monitor</div>
+        <div class="tab" onclick="switchTab('cache')">Cache Manager</div>
         <div class="tab" onclick="switchTab('guide')">API User Guide</div>
     </div>
 
@@ -507,6 +508,35 @@
         </div>
     </div>
 
+    <!-- Cache Manager Tab -->
+    <div id="cache" class="tab-content">
+        <div class="glass-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0;">Code Cache Manager</h2>
+                <div style="display: flex; gap: 1rem;">
+                    <button onclick="loadCacheData()" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: rgba(255,255,255,0.1);">🔄 Refresh</button>
+                    <button onclick="clearAllCache()" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: var(--danger);">🗑️ Clear Entire Cache</button>
+                </div>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table class="exec-table">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Size (Bytes)</th>
+                            <th>Last Modified</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cache_tbody">
+                        <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- User Guide Tab -->
     <div id="guide" class="tab-content">
         <div class="glass-panel guide-section">
@@ -547,6 +577,8 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
 
         if(tabId === 'monitor') {
             loadMonitorData();
+        } else if (tabId === 'cache') {
+            loadCacheData();
         }
     }
 
@@ -624,6 +656,73 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
             });
         } catch (e) {
             console.error("Failed to load monitor data", e);
+        }
+    }
+
+    async function loadCacheData() {
+        try {
+            const res = await fetch('/api/cache');
+            const data = await res.json();
+            
+            const tbody = document.getElementById('cache_tbody');
+            tbody.innerHTML = '';
+
+            if(data.files.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">Code cache is currently empty.</td></tr>';
+                return;
+            }
+
+            data.files.forEach(file => {
+                const tr = document.createElement('tr');
+                
+                // Format datetime
+                const date = new Date(file.modified_at);
+                const timeString = date.toLocaleString();
+                
+                tr.innerHTML = `
+                    <td style="font-family: monospace; color: #60a5fa;">${file.filename}</td>
+                    <td>${file.size_bytes.toLocaleString()}</td>
+                    <td>${timeString}</td>
+                    <td>
+                        <button onclick="deleteCacheFile('${file.filename}')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 0.25rem 0.5rem; font-size: 0.8rem;">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            console.error("Failed to load cache data", e);
+        }
+    }
+
+    async function deleteCacheFile(filename) {
+        if(!confirm(`Are you sure you want to delete ${filename}?`)) return;
+        
+        try {
+            const res = await fetch(`/api/cache/${filename}`, { method: 'DELETE' });
+            if(res.ok) {
+                loadCacheData(); // Refresh list
+            } else {
+                const err = await res.json();
+                alert(`Failed to delete: ${err.detail}`);
+            }
+        } catch (e) {
+            alert(`Error deleting file: ${e.message}`);
+        }
+    }
+
+    async function clearAllCache() {
+        if(!confirm(`⚠️ WARNING: Are you sure you want to delete ALL cached scripts? This cannot be undone.`)) return;
+        
+        try {
+            const res = await fetch(`/api/cache`, { method: 'DELETE' });
+            if(res.ok) {
+                loadCacheData(); // Refresh list
+            } else {
+                const err = await res.json();
+                alert(`Failed to clear cache: ${err.detail || 'Unknown error'}`);
+            }
+        } catch (e) {
+            alert(`Error clearing cache: ${e.message}`);
         }
     }
 
