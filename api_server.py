@@ -381,8 +381,40 @@ def run_cached_script(filename: str, vehicle_type: str, month: int):
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
             
-        # Swap out any existing TripData parquet URL with the newly requested one
-        pattern = r"https://d37ci6vzurychx\.cloudfront\.net/trip-data/[a-z]+_tripdata_2026-\d{2}\.parquet"
+        # Extract the old URL to find old month and vehicle type
+        pattern = r"https://d37ci6vzurychx\.cloudfront\.net/trip-data/([a-z]+)_tripdata_2026-(\d{2})\.parquet"
+        match = re.search(pattern, content)
+        
+        if match:
+            old_vt = match.group(1)
+            old_month = int(match.group(2))
+            
+            # Month mapping
+            months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+            if 1 <= old_month <= 12 and 1 <= int(month) <= 12:
+                old_month_name = months[old_month - 1]
+                new_month_name = months[int(month) - 1]
+                
+                # VT mapping
+                def get_vt_display(vt_code):
+                    if vt_code == "yellow": return "Yellow"
+                    if vt_code == "green": return "Green"
+                    return "High Volume For-Hire"
+                
+                old_vt_display = get_vt_display(old_vt)
+                new_vt_display = get_vt_display(vt)
+                
+                # Replace month strings (Title case, lower case, upper case)
+                content = content.replace(old_month_name, new_month_name)
+                content = content.replace(old_month_name.lower(), new_month_name.lower())
+                content = content.replace(old_month_name.upper(), new_month_name.upper())
+                
+                # Replace VT strings
+                content = content.replace(old_vt_display, new_vt_display)
+                content = content.replace(old_vt_display.lower(), new_vt_display.lower())
+                content = content.replace(old_vt_display.upper(), new_vt_display.upper())
+            
+        # Swap out the URL itself using the regex
         content = re.sub(pattern, target_url, content)
         
         with open(filepath, 'w', encoding='utf-8') as f:
