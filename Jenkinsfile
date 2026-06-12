@@ -83,6 +83,7 @@ pipeline {
                                 providers.py \
                                 usage_tracker.py \
                                 monitor.py \
+                                mcp_server.py \
                                 index.html \
                                 ${SSH_USER}@192.168.6.51:${DEPLOYMENT_DIR}/
                         '''
