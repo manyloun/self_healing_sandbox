@@ -530,11 +530,19 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
 </div>
 
 <script>
-    function switchTab(tabId) {
+    function switchTab(tabId, element) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         
-        event.target.classList.add('active');
+        if (element) {
+            element.classList.add('active');
+        } else if (window.event && window.event.currentTarget) {
+            window.event.currentTarget.classList.add('active');
+        } else {
+            const tabEl = document.querySelector(`.tab[onclick*="'${tabId}'"]`);
+            if (tabEl) tabEl.classList.add('active');
+        }
+        
         document.getElementById(tabId).classList.add('active');
 
         if(tabId === 'monitor') {
@@ -542,11 +550,19 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
         }
     }
 
-    function switchResultTab(tabId) {
+    function switchResultTab(tabId, element) {
         document.querySelectorAll('.rtab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.rtab-content').forEach(c => c.classList.remove('active'));
         
-        event.target.classList.add('active');
+        if (element) {
+            element.classList.add('active');
+        } else if (window.event && window.event.currentTarget) {
+            window.event.currentTarget.classList.add('active');
+        } else {
+            const tabEl = document.querySelector(`.rtab[onclick*="'${tabId}'"]`);
+            if (tabEl) tabEl.classList.add('active');
+        }
+        
         document.getElementById(tabId).classList.add('active');
     }
 
@@ -719,8 +735,6 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
                 
                 // Switch back to visual tab automatically
                 switchResultTab('visual');
-                document.querySelectorAll('.rtab').forEach(t => t.classList.remove('active'));
-                document.querySelector('.rtab').classList.add('active');
 
                 // Scroll to results
                 resultPanel.scrollIntoView({ behavior: 'smooth' });
