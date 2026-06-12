@@ -283,6 +283,23 @@ def mcp_test(prompt: str):
     
     try:
         result, stats = llm.generate_code(system_prompt, prompt)
+        
+        execution_id = usage_tracker._generate_execution_id()
+        cost = usage_tracker._calculate_cost(stats["model"], stats["input_tokens"], stats["output_tokens"])
+        
+        log_entry = {
+            "execution_id": execution_id,
+            "timestamp": datetime.now().isoformat(),
+            "vehicle_type": "N/A",
+            "month": "N/A",
+            "task": f"MCP Test: {prompt}",
+            "provider": "anthropic",
+            "api_called": True,
+            "total_cost": cost,
+            "result_summary": "Generated MCP HTML Dashboard"
+        }
+        usage_tracker._save_execution_log(log_entry)
+        
         return {"status": "success", "result": result, "usage": stats}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -350,7 +367,7 @@ def run_cached_script(filename: str, vehicle_type: str, month: int):
 
     try:
         from schema_specialist import SchemaSpecialist
-        from sandbox import Sandbox
+        from sandbox import SafeSandbox
         
         specialist = SchemaSpecialist("anthropic") # Provider doesn't matter for URL building
         vt = "hvfhv" if vehicle_type == "fhvhv" else vehicle_type
@@ -367,9 +384,12 @@ def run_cached_script(filename: str, vehicle_type: str, month: int):
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
             
-        # Execute the modified script
-        sandbox = Sandbox()
-        result = sandbox.execute_script(filepath)
+        # Execute the modified script using SafeSandbox static method
+        result_dict = SafeSandbox.execute(content)
+        if result_dict["success"]:
+            result = result_dict.get("output", "")
+        else:
+            result = f"Error: {result_dict.get('error', 'Unknown error')}\n\nStdout:\n{result_dict.get('stdout', '')}"
         
         # Log it as a cached execution
         execution_id = usage_tracker._generate_execution_id()
