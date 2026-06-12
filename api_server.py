@@ -348,15 +348,15 @@ def run_cached_script(filename: str, vehicle_type: str, month: int):
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="File not found")
 
-    from schema_specialist import SchemaSpecialist
-    from sandbox import Sandbox
-    
-    specialist = SchemaSpecialist("anthropic") # Provider doesn't matter for URL building
-    vt = "hvfhv" if vehicle_type == "fhvhv" else vehicle_type
-    target_url = specialist.build_url(vt, month)
-
-    # Regex string replacement inside the Python script to swap the parquet URL
     try:
+        from schema_specialist import SchemaSpecialist
+        from sandbox import Sandbox
+        
+        specialist = SchemaSpecialist("anthropic") # Provider doesn't matter for URL building
+        vt = "hvfhv" if vehicle_type == "fhvhv" else vehicle_type
+        target_url = specialist.build_url(vt, month)
+
+        # Regex string replacement inside the Python script to swap the parquet URL
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
             
