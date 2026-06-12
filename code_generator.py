@@ -7,16 +7,30 @@ class CodeGenerator:
 
     def _format_schema_for_llm(self, schema_profile) -> str:
         """Format schema (dict or string) into readable text for LLM"""
+        tlc_mappings = """
+KNOWN TLC DATA MAPPINGS:
+- VendorID (Provider): 
+  1: CMT (Creative Mobile Technologies)
+  2: VeriFone / Curb
+  3: Uber Technologies
+  4: Lyft
+  5: Via / Via Transportation
+  6: Juno (acquired by Gett; historical data only)
+  7: Other / Miscellaneous Licensed Dispatch Provider
+"""
+        formatted = ""
         if isinstance(schema_profile, dict):
             # Convert schema dict to readable format
             formatted_fields = []
             if "fields" in schema_profile:
                 for field in schema_profile["fields"]:
                     formatted_fields.append(f"  - {field['name']}: {field['type']}")
-            return "SCHEMA FIELDS:\n" + "\n".join(formatted_fields)
+            formatted = "SCHEMA FIELDS:\n" + "\n".join(formatted_fields)
         else:
             # Already a string
-            return schema_profile
+            formatted = schema_profile
+            
+        return formatted + "\n" + tlc_mappings
 
     def generate_analytics_code(self, target_url: str, user_task: str, schema_profile) -> tuple:
         """
