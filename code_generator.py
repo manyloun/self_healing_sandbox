@@ -27,7 +27,7 @@ class CodeGenerator:
         
         system_prompt = f"""You are an elite Databricks Data Engineer. Write clean Python code using pandas to process data from: '{target_url}'
         1. Read file using: df = pd.read_parquet('{target_url}')
-        2. Assign final human-readable string output to a local variable named 'FINAL_OUTPUT'.
+        2. Assign the requested final output (e.g. text or a full HTML document) to a local variable named 'FINAL_OUTPUT'.
         3. Output raw python text only. Never wrap code blocks in markdown fences like ```python."""
         
         user_prompt = f"TASK: {user_task}\n\n{schema_formatted}\n\nWrite the processing script now."
