@@ -329,7 +329,8 @@ def skills_test(prompt: str):
     
     llm = LLMFactory.get_provider("anthropic")
     
-    skill_path = os.path.join(".claude", "skills", "sample-data", "SKILL.md")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    skill_path = os.path.join(base_dir, ".claude", "skills", "sample-data", "SKILL.md")
     try:
         with open(skill_path, 'r', encoding='utf-8') as f:
             skill_content = f.read()
