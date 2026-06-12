@@ -4,7 +4,16 @@ This repository showcases a production-grade, self-healing data analytics engine
 
 Engineered explicitly using **Claude Haiku 4.5** as a decoupled orchestration controller, the framework maps directly to enterprise data platform paradigms utilized across Databricks and Azure environments.
 
-## 🆕 Latest Features (v2.0)
+## 🆕 Latest Features (v2.1)
+
+### 🖥️ Web UI Dashboard & Cache Manager
+- **Interactive Web Dashboard**: Built-in HTML UI with a clean, glassmorphism design for running analytics pipelines locally or remotely.
+- **Cache Manager Tab**: Manage, view, and delete cached LLM-generated code scripts directly from the browser UI.
+- **Demo Prompts**: Quick-fill demo chips for Standard Text, HTML Grids, and Chart.js Data Visualizations.
+
+### 🛡️ Robust Code Extraction
+- **Regex-based Code Parsing**: The Orchestrator automatically intercepts and extracts clean Python code using Regex, preventing failures when the LLM attempts to wrap code in markdown formatting or conversational filler text.
+- **Strict Visualization Prompts**: Enforces strict `Chart.js v4` rendering and syntax to ensure dashboards render natively in the browser without relying on arbitrary local setups.
 
 ### Smart Schema & Code Caching
 - **AVRO Schema Versioning**: Automatically extracts parquet schemas and stores them as `.avsc` files with SHA256 hashes in the `schema/` folder
