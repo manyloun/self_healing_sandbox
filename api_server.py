@@ -125,6 +125,37 @@ async def status():
         "timestamp": datetime.now().isoformat()
     }
 
+@app.get("/api/deployment-status")
+async def get_deployment_status():
+    """Proxy to check Jenkins build status securely"""
+    jenkins_token = os.environ.get("JENKINS_API_TOKEN")
+    if not jenkins_token:
+        # If no token, assume not building to avoid UI breaking
+        return {"building": False, "error": "No JENKINS_API_TOKEN configured"}
+        
+    try:
+        import httpx
+        # We query the Ubuntu host where Jenkins is running (192.168.6.51)
+        url = "http://192.168.6.51:8090/job/taxi-analytics-api-pipeline/lastBuild/api/json"
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                url, 
+                auth=("admin", jenkins_token),
+                timeout=2.0
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                # Jenkins API returns a 'building' boolean
+                return {"building": data.get("building", False)}
+            else:
+                return {"building": False, "error": f"Jenkins returned {response.status_code}"}
+                
+    except Exception as e:
+        # If Jenkins is unreachable or errors out, assume not building
+        return {"building": False, "error": str(e)}
+
 
 # ============================================================================
 # COST TRACKING ENDPOINTS

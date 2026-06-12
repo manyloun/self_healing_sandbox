@@ -163,6 +163,35 @@
 
         .status-ok { color: #34d399; }
         .status-error { color: #f87171; }
+
+        #deployment-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        #deployment-overlay .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+            display: block;
+        }
         .status-pending { color: #fbbf24; }
 
         .result-container {
@@ -354,6 +383,11 @@
     </style>
 </head>
 <body>
+    <div id="deployment-overlay">
+        <div class="spinner"></div>
+        <div>System Updating...</div>
+        <div style="font-size: 1rem; color: var(--text-muted); margin-top: 1rem; font-weight: normal;">Jenkins is deploying a new version. Please wait...</div>
+    </div>
 
 <div style="background: rgba(239, 68, 68, 0.9); color: white; text-align: center; padding: 0.5rem; font-weight: 600; font-size: 0.9rem; width: 100%; position: absolute; top: 0; left: 0; z-index: 1000; letter-spacing: 0.05em; border-bottom: 2px solid #b91c1c;">
     ⚠️ DEBUG & DEMO ENVIRONMENT — This interface is for testing only. Not intended for production.
@@ -606,6 +640,32 @@ curl -X POST "http://192.168.6.51:8100/api/analyze?vehicle_type=yellow&month=3&t
         el.style.borderColor = 'var(--success)';
         setTimeout(() => el.style.borderColor = 'var(--border-color)', 500);
     }
+
+    // CI/CD Deployment Status Polling
+    let isCurrentlyBuilding = false;
+    setInterval(async () => {
+        try {
+            const res = await fetch('/api/deployment-status');
+            const data = await res.json();
+            
+            const overlay = document.getElementById('deployment-overlay');
+            
+            if (data.building === true) {
+                isCurrentlyBuilding = true;
+                overlay.style.display = 'flex';
+            } else if (data.building === false && isCurrentlyBuilding === true) {
+                // Build just finished! Reload the page to get the latest UI and Backend
+                window.location.reload(true);
+            }
+        } catch (e) {
+            // If the backend is completely down (during container restart), the fetch will fail.
+            // We should also show the overlay during this critical restart phase.
+            if (isCurrentlyBuilding) {
+                const overlay = document.getElementById('deployment-overlay');
+                overlay.style.display = 'flex';
+            }
+        }
+    }, 3000);
 
     async function loadMonitorData() {
         try {
